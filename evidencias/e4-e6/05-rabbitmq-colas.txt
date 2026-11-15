@@ -1,0 +1,14 @@
+### d) Colas (pendientes) y estadisticas (procesados)
+Timeout: 60.0 seconds ...
+Listing queues for vhost / ...
+name	messages	messages_ready	consumers
+notification_queue	0	0	2
+inventory_queue	0	0	2
+failed_tasks	0	0	0
+billing_queue	0	0	2
+
+Estadisticas de la API de administracion:
+billing_queue        publicados=6 entregados=6 ack=6
+failed_tasks         publicados=0 entregados=0 ack=0
+inventory_queue      publicados=6 entregados=6 ack=6
+notification_queue   publicados=6 entregados=6 ack=6

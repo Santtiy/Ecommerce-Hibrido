@@ -1,0 +1,13 @@
+### e) Reglas de negocio en logs de workers
+[billing-worker]
+2026-11-15T01:58:39.253 [billing] orden 97ad28fa-1bed-46ac-a4f7-a4c622a2b8e2 -> PAYMENT_SUCCESS en 679 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+2026-11-15T01:58:40.765 [billing] orden 1015d0c8-08f4-4f38-9bf7-2d3aa0814dca -> PAYMENT_FAILED en 302 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+2026-11-15T01:58:42.788 [billing] orden 97d0db17-69cc-4b02-905b-2b7911e7a0b3 -> PAYMENT_SUCCESS en 289 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+[inventory-worker]
+2026-11-15T01:58:39.134 [inventory] orden 97ad28fa-1bed-46ac-a4f7-a4c622a2b8e2 -> STOCK_RESERVED en 556 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+2026-11-15T01:58:40.950 [inventory] orden 1015d0c8-08f4-4f38-9bf7-2d3aa0814dca -> STOCK_RESERVED en 488 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+2026-11-15T01:58:42.959 [inventory] orden 97d0db17-69cc-4b02-905b-2b7911e7a0b3 -> STOCK_OUT_OF_STOCK en 460 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+[notification-worker]
+2026-11-15T01:58:39.243 [notification] orden 97ad28fa-1bed-46ac-a4f7-a4c622a2b8e2 -> EMAIL_SENT en 667 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+2026-11-15T01:58:40.779 [notification] orden 1015d0c8-08f4-4f38-9bf7-2d3aa0814dca -> EMAIL_SENT en 317 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+2026-11-15T01:58:42.988 [notification] orden 97d0db17-69cc-4b02-905b-2b7911e7a0b3 -> EMAIL_SENT en 490 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)

@@ -1,0 +1,8 @@
+### a) Persistencia
+                  id                  |   cliente    | estado | total_monto 
+--------------------------------------+--------------+--------+-------------
+ 97ad28fa-1bed-46ac-a4f7-a4c622a2b8e2 | Cliente Demo | CREADA |   160650.00
+ 1015d0c8-08f4-4f38-9bf7-2d3aa0814dca | Cliente Demo | CREADA |  1606500.00
+ 97d0db17-69cc-4b02-905b-2b7911e7a0b3 | Cliente Demo | CREADA |   321300.00
+(3 rows)
+

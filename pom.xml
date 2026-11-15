@@ -13,6 +13,11 @@
         <module>common</module>
         <module>order-api</module>
         <module>analytics-service</module>
+        <module>order-processor</module>
+        <module>billing-worker</module>
+        <module>inventory-worker</module>
+        <module>notification-worker</module>
+        <module>dashboard-aggregator</module>
     </modules>
 
     <properties>

@@ -1,0 +1,33 @@
+﻿== 1/4 Infraestructura
+  postgres-db -> healthy
+  kafka -> healthy
+  rabbitmq -> healthy
+== 2/4 Jar
+  Los siete jar existen.
+== 3/4 Servicios
+Tanda 1: billing-worker, inventory-worker, notification-worker, dashboard-aggregator
+  lanzado billing-worker         java PID 6380    log C:\Projects\Ecommerce-Hibrido\logs\billing-worker.log
+  lanzado inventory-worker       java PID 16908   log C:\Projects\Ecommerce-Hibrido\logs\inventory-worker.log
+  lanzado notification-worker    java PID 34408   log C:\Projects\Ecommerce-Hibrido\logs\notification-worker.log
+  lanzado dashboard-aggregator   java PID 30612   log C:\Projects\Ecommerce-Hibrido\logs\dashboard-aggregator.log
+  listo    billing-worker         (6 s)
+  listo    inventory-worker       (0 s)
+  listo    notification-worker    (0 s)
+  listo    dashboard-aggregator   (0 s)
+Tanda 2: order-api
+  lanzado order-api              java PID 20148   log C:\Projects\Ecommerce-Hibrido\logs\order-api.log
+  listo    order-api              (7 s)
+Tanda 3: analytics-service, order-processor
+  lanzado analytics-service      java PID 35240   log C:\Projects\Ecommerce-Hibrido\logs\analytics-service.log
+  lanzado order-processor        java PID 8948    log C:\Projects\Ecommerce-Hibrido\logs\order-processor.log
+  listo    analytics-service      (3 s)
+  listo    order-processor        (1 s)
+
+== 4/4 Los siete servicios estan listos
+PIDs en C:\Projects\Ecommerce-Hibrido\ops\pids.txt  |  logs en C:\Projects\Ecommerce-Hibrido\logs
+
+  Dashboard ............ http://localhost:8081
+  API de ordenes ....... http://localhost:8080/order   (POST; prueba con ops\enviar-ordenes.ps1)
+  RabbitMQ (consola) ... http://localhost:15672        usuario ecommerce / clave ecommerce
+
+Para detener: ops\detener.ps1   (con -ConInfra apaga tambien los contenedores)

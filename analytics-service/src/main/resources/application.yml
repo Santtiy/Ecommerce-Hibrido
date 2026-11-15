@@ -18,3 +18,7 @@ spring:
       auto-offset-reset: earliest
       properties:
         spring.json.trusted.packages: co.edu.proyecto.common.contratos
+
+# Etapa 6: archivo donde se registra cada orden (relativo al directorio de trabajo).
+analytics:
+  archivo-ordenes: ${ARCHIVO_ORDENES:./datos/ordenes.log}

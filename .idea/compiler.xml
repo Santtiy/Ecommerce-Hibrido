@@ -7,8 +7,13 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="common" />
-        <module name="order-api" />
+        <module name="dashboard-aggregator" />
+        <module name="inventory-worker" />
         <module name="analytics-service" />
+        <module name="order-processor" />
+        <module name="notification-worker" />
+        <module name="order-api" />
+        <module name="billing-worker" />
       </profile>
     </annotationProcessing>
   </component>

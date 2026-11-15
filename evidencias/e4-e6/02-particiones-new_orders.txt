@@ -1,0 +1,5 @@
+### b) Particiones de new_orders
+Topic: new_orders	TopicId: rR5YbVHcR9mxX_MXcDPYBw	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: new_orders	Partition: 0	Leader: 1	Replicas: 1	Isr: 1
+	Topic: new_orders	Partition: 1	Leader: 1	Replicas: 1	Isr: 1
+	Topic: new_orders	Partition: 2	Leader: 1	Replicas: 1	Isr: 1

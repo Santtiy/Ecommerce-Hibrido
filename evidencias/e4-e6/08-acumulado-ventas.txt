@@ -1,0 +1,2 @@
+### g) Acumulado de ventas (ultima linea)
+2026-11-15T01:58:42.494 Orden 97d0db17-69cc-4b02-905b-2b7911e7a0b3 | órdenes acumuladas: 3 | total acumulado: 2088450.00 COP

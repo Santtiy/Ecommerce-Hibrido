@@ -1,0 +1,16 @@
+### c) Grupos de consumidores
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                     HOST            CLIENT-ID
+analytics-group new_orders      1          1               1               0               consumer-analytics-group-2-82110f11-b3b9-4b04-8807-60502304c685 /172.18.0.1     consumer-analytics-group-2
+analytics-group new_orders      2          1               1               0               consumer-analytics-group-3-750f2318-3a10-423a-aa3c-f3141ba8fa1a /172.18.0.1     consumer-analytics-group-3
+analytics-group new_orders      0          1               1               0               consumer-analytics-group-1-c14906a3-5635-44c4-abea-5ae2d53ad2d8 /172.18.0.1     consumer-analytics-group-1
+
+GROUP           TOPIC               PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                     HOST            CLIENT-ID
+dashboard-group notification_events 0          3               3               0               consumer-dashboard-group-1-8e27ce28-0acb-43f6-bffc-63ad4bf917d2 /172.18.0.1     consumer-dashboard-group-1
+dashboard-group inventory_events    0          3               3               0               consumer-dashboard-group-3-72fe86c3-16eb-4457-bfda-ac2ce2bbdf5e /172.18.0.1     consumer-dashboard-group-3
+dashboard-group billing_events      0          3               3               0               consumer-dashboard-group-2-08608501-60b6-4a8d-8957-e89978551c0e /172.18.0.1     consumer-dashboard-group-2
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                     HOST            CLIENT-ID
+processor-group new_orders      2          1               1               0               consumer-processor-group-3-ebe9b1cb-5e7c-43e7-98b6-bbc4bd90aca1 /172.18.0.1     consumer-processor-group-3
+processor-group new_orders      1          1               1               0               consumer-processor-group-2-d1c06572-2a51-4a14-9f6e-04185715c2ed /172.18.0.1     consumer-processor-group-2
+processor-group new_orders      0          1               1               0               consumer-processor-group-1-004cecea-96e8-425a-acda-92e61a83bc63 /172.18.0.1     consumer-processor-group-1

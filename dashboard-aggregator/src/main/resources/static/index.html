@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard de órdenes</title>
+  <style>
+    :root {
+      --fondo: #f5f6f8; --tarjeta: #ffffff; --texto: #1d2330; --suave: #6b7280; --borde: #e3e6eb;
+      --ok-fondo: #e3f5e8; --ok-texto: #156a35;
+      --fallo-fondo: #fde6e6; --fallo-texto: #a32020;
+      --pend-fondo: #eceef1; --pend-texto: #5f6672;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fondo: #14171c; --tarjeta: #1c2027; --texto: #e6e8eb; --suave: #9aa1ab; --borde: #2c313a;
+        --ok-fondo: #173622; --ok-texto: #7fd99c;
+        --fallo-fondo: #3d1b1b; --fallo-texto: #f19a9a;
+        --pend-fondo: #2a2e36; --pend-texto: #a7adb7;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px 16px; background: var(--fondo); color: var(--texto);
+      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 980px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+    h1 { font-size: 22px; margin: 0; }
+    .conexion { font-size: 13px; color: var(--suave); display: flex; align-items: center; gap: 6px; }
+    .punto { width: 9px; height: 9px; border-radius: 50%; background: var(--fallo-texto); }
+    .conectado .punto { background: var(--ok-texto); }
+    .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borde); white-space: nowrap; }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); font-weight: 600; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.orden { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+    .estado { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .ok { background: var(--ok-fondo); color: var(--ok-texto); }
+    .fallo { background: var(--fallo-fondo); color: var(--fallo-texto); }
+    .pendiente { background: var(--pend-fondo); color: var(--pend-texto); }
+    .vacio { padding: 28px 14px; text-align: center; color: var(--suave); }
+    tr.recien td { animation: destello 1.2s ease-out; }
+    @keyframes destello { from { background: var(--pend-fondo); } to { background: transparent; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Órdenes en proceso</h1>
+    <div id="conexion" class="conexion"><span class="punto"></span><span id="texto-conexion">Conectando…</span></div>
+  </header>
+  <div class="tarjeta">
+    <table>
+      <thead><tr><th>Orden</th><th>Pago</th><th>Stock</th><th>Correo</th></tr></thead>
+      <tbody id="filas"><tr id="sin-ordenes"><td colspan="4" class="vacio">Aún no llegan órdenes.</td></tr></tbody>
+    </table>
+  </div>
+</main>
+<script>
+  // Servida por el propio dashboard se usa su mismo host; abierta como archivo, localhost:8081.
+  const URL_WS = location.protocol.startsWith('http')
+    ? 'ws://' + location.host + '/ws/ordenes'
+    : 'ws://localhost:8081/ws/ordenes';
+
+  const EXITOS = ['PAYMENT_SUCCESS', 'STOCK_RESERVED', 'EMAIL_SENT'];
+  const FALLOS = ['PAYMENT_FAILED', 'STOCK_OUT_OF_STOCK'];
+  const filas = document.getElementById('filas');
+
+  function clase(estado) {
+    if (EXITOS.includes(estado)) return 'ok';
+    if (FALLOS.includes(estado)) return 'fallo';
+    return 'pendiente';
+  }
+
+  function celdaEstado(td, estado) {
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'estado ' + clase(estado);
+    etiqueta.textContent = estado;   // textContent: nunca se interpreta como HTML
+    td.replaceChildren(etiqueta);
+  }
+
+  function actualizarFila(orderId, estado) {
+    document.getElementById('sin-ordenes')?.remove();
+    let fila = document.querySelector('tr[data-orden="' + CSS.escape(orderId) + '"]');
+    if (!fila) {
+      fila = document.createElement('tr');
+      fila.dataset.orden = orderId;
+      const celdaId = document.createElement('td');
+      celdaId.className = 'orden';
+      celdaId.textContent = orderId;
+      fila.append(celdaId, document.createElement('td'), document.createElement('td'), document.createElement('td'));
+      filas.prepend(fila);
+    }
+    celdaEstado(fila.children[1], estado.payment);
+    celdaEstado(fila.children[2], estado.stock);
+    celdaEstado(fila.children[3], estado.email);
+    fila.classList.remove('recien'); void fila.offsetWidth; fila.classList.add('recien');
+  }
+
+  function mostrarConexion(conectado, texto) {
+    document.getElementById('conexion').classList.toggle('conectado', conectado);
+    document.getElementById('texto-conexion').textContent = texto;
+  }
+
+  function conectar() {
+    const ws = new WebSocket(URL_WS);
+    ws.onopen = () => mostrarConexion(true, 'Conectado a ' + URL_WS);
+    ws.onmessage = (evento) => {
+      // {"<orderId>": {"payment": "...", "stock": "...", "email": "..."}} (una o varias claves)
+      const datos = JSON.parse(evento.data);
+      for (const [orderId, estado] of Object.entries(datos)) actualizarFila(orderId, estado);
+    };
+    ws.onclose = () => {
+      mostrarConexion(false, 'Desconectado; reintentando…');
+      setTimeout(conectar, 2000);
+    };
+  }
+
+  conectar();
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+﻿
+== 1. Libro x1 a 150.000
+  HTTP   esperado 202 | obtenido 202
+  Total  esperado 160650 | obtenido 160650,00 COP
+  orderId: 97ad28fa-1bed-46ac-a4f7-a4c622a2b8e2   estado: CREADA
+  Asincrono esperado (verlo en el dashboard): PAYMENT_SUCCESS, STOCK_RESERVED, EMAIL_SENT
+
+== 2. Televisor x1 a 1.500.000
+  HTTP   esperado 202 | obtenido 202
+  Total  esperado 1606500 | obtenido 1606500,00 COP
+  orderId: 1015d0c8-08f4-4f38-9bf7-2d3aa0814dca   estado: CREADA
+  Asincrono esperado (verlo en el dashboard): PAYMENT_FAILED (supera 1.000.000, RN-11), STOCK_RESERVED, EMAIL_SENT
+
+== 3. Memoria USB x15 a 20.000
+  HTTP   esperado 202 | obtenido 202
+  Total  esperado 321300 | obtenido 321300,00 COP
+  orderId: 97d0db17-69cc-4b02-905b-2b7911e7a0b3   estado: CREADA
+  Asincrono esperado (verlo en el dashboard): PAYMENT_SUCCESS, STOCK_OUT_OF_STOCK (mas de 10 unidades, RN-12), EMAIL_SENT
+
+== 4. Lista de items vacia
+  HTTP   esperado 400 | obtenido 400
+  Cuerpo: {"codigo":400,"mensaje":"La solicitud tiene campos inválidos","detalles":["items: no debe estar vacío"],"momento":"2026-11-15T06:58:44.544026600Z"}
+
+== 5. Cantidad 0
+  HTTP   esperado 400 | obtenido 400
+  Cuerpo: {"codigo":400,"mensaje":"La solicitud tiene campos inválidos","detalles":["items[0].cantidad: debe ser mayor que o igual a 1"],"momento":"2026-11-15T06:58:46.607754400Z"}
+
+Todo lo comprobable desde HTTP coincide. Revisa ahora el dashboard: http://localhost:8081

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: order-processor
+
+  main:
+    web-application-type: none   # puente Kafka → RabbitMQ: no necesita servidor web
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    consumer:
+      # Debe ser distinto de "analytics-group". Ver ConfiguracionKafka.
+      group-id: processor-group
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: co.edu.proyecto.common.contratos
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:ecommerce}
+    password: ${RABBITMQ_PASSWORD:ecommerce}

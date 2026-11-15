@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: billing-worker
+
+  main:
+    web-application-type: none
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:ecommerce}
+    password: ${RABBITMQ_PASSWORD:ecommerce}
+    listener:
+      simple:
+        # prefetch 1: RabbitMQ no le adelanta a un consumidor un segundo mensaje hasta que confirme
+        # el primero. Así reparte de forma equitativa entre instancias en lugar de adelantarle muchos
+        # a una sola; es lo que hará visible el patrón work-queue con dos instancias (etapa 9).
+        prefetch: 1
+        concurrency: 2
+        # Agotados los reintentos, el mensaje se rechaza SIN reencolar y va al DLX (failed_tasks).
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    producer:
+      properties:
+        spring.json.add.type.headers: false
+        # Si Kafka no responde, fallar en 5 s (y no en 60) para que entren los reintentos de RabbitMQ.
+        max.block.ms: 5000

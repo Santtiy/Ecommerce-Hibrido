@@ -1,0 +1,16 @@
+# Salida de Maven
+target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Datos generados en ejecución (analytics-service: ./datos/ordenes.log)
+datos/
+
+# Logs
+*.log
+logs/
+
+# PIDs de los servicios lanzados por ops/arrancar.ps1
+ops/pids.txt

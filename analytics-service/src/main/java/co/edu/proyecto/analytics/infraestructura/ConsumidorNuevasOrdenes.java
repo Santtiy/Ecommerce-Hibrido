@@ -1,6 +1,7 @@
 package co.edu.proyecto.analytics.infraestructura;
 
 import co.edu.proyecto.analytics.aplicacion.AgregadorVentas;
+import co.edu.proyecto.analytics.so.RegistroOrdenesListener;
 import co.edu.proyecto.common.contratos.OrdenCreada;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +14,11 @@ public class ConsumidorNuevasOrdenes {
     private static final Logger log = LoggerFactory.getLogger(ConsumidorNuevasOrdenes.class);
 
     private final AgregadorVentas agregador;
+    private final RegistroOrdenesListener registroOrdenes;
 
-    public ConsumidorNuevasOrdenes(AgregadorVentas agregador) {
+    public ConsumidorNuevasOrdenes(AgregadorVentas agregador, RegistroOrdenesListener registroOrdenes) {
         this.agregador = agregador;
+        this.registroOrdenes = registroOrdenes;
     }
 
     @KafkaListener(topics = "new_orders", groupId = "analytics-group")
@@ -23,5 +26,7 @@ public class ConsumidorNuevasOrdenes {
         agregador.registrar(evento.monto());
         log.info("Orden {} | órdenes acumuladas: {} | total acumulado: {} COP",
                 evento.orderId(), agregador.cantidadOrdenes(), agregador.totalAcumulado());
+        // Etapa 6: registro en archivo y métricas de SO. No lanza excepciones (ver su Javadoc).
+        registroOrdenes.alRecibirOrden(evento);
     }
 }

@@ -1,0 +1,12 @@
+### d) Exchanges
+Listing exchanges for vhost / ...
+name	type
+order_tasks	fanout
+amq.direct	direct
+amq.topic	topic
+amq.headers	headers
+amq.fanout	fanout
+amq.rabbitmq.trace	topic
+amq.match	headers
+order_tasks_dlx	fanout
+	direct

@@ -2,3 +2,7 @@ C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\an
 C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\aplicacion\AgregadorVentas.java
 C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\configuracion\ConfiguracionKafka.java
 C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\infraestructura\ConsumidorNuevasOrdenes.java
+C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\so\GestorArchivos.java
+C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\so\MonitorRecursos.java
+C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\so\RegistroOrdenesListener.java
+C:\Projects\Ecommerce-Hibrido\analytics-service\src\main\java\co\edu\proyecto\analytics\so\ResultadoES.java

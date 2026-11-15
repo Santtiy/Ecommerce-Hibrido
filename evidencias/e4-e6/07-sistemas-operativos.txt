@@ -1,0 +1,10 @@
+### f) Modulo de Sistemas Operativos
+datos\ordenes.log -> existe: True, lineas: 3
+97ad28fa-1bed-46ac-a4f7-a4c622a2b8e2;160650.00;2026-11-15T06:58:38.362323600Z
+1015d0c8-08f4-4f38-9bf7-2d3aa0814dca;1606500.00;2026-11-15T06:58:40.457295100Z
+97d0db17-69cc-4b02-905b-2b7911e7a0b3;321300.00;2026-11-15T06:58:42.495102300Z
+
+Log de analytics-service (bytes, ms, memoria):
+2026-11-15T01:58:38.369 [SO] ResultadoES[operacion=escritura, bytes=79, milisegundos=1] | archivo=79 bytes | memoria usada=34 MB, libre=9 MB, total=44 MB, máxima=4006 MB, procesadores=12
+2026-11-15T01:58:40.458 [SO] ResultadoES[operacion=escritura, bytes=80, milisegundos=1] | archivo=159 bytes | memoria usada=35 MB, libre=8 MB, total=44 MB, máxima=4006 MB, procesadores=12
+2026-11-15T01:58:42.497 [SO] ResultadoES[operacion=escritura, bytes=79, milisegundos=1] | archivo=238 bytes | memoria usada=36 MB, libre=7 MB, total=44 MB, máxima=4006 MB, procesadores=12
