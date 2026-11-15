@@ -1,0 +1,30 @@
+### 1. Orden válida de 150.000 COP → 202 ACCEPTED (total esperado: 160650.00)
+POST http://localhost:8080/order
+Content-Type: application/json
+
+{
+  "cliente": "Ana Perez",
+  "items": [
+    { "sku": "SKU-1", "nombre": "Monitor", "cantidad": 1, "precioUnitario": 150000 }
+  ]
+}
+
+### 2. Orden sin ítems → 400 BAD REQUEST
+POST http://localhost:8080/order
+Content-Type: application/json
+
+{
+  "cliente": "Ana Perez",
+  "items": []
+}
+
+### 3. Orden con cantidad 0 → 400 BAD REQUEST
+POST http://localhost:8080/order
+Content-Type: application/json
+
+{
+  "cliente": "Ana Perez",
+  "items": [
+    { "sku": "SKU-1", "nombre": "Monitor", "cantidad": 0, "precioUnitario": 150000 }
+  ]
+}

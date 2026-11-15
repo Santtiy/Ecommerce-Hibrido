@@ -1,0 +1,4 @@
+co\edu\proyecto\analytics\infraestructura\ConsumidorNuevasOrdenes.class
+co\edu\proyecto\analytics\AnalyticsApplication.class
+co\edu\proyecto\analytics\aplicacion\AgregadorVentas.class
+co\edu\proyecto\analytics\configuracion\ConfiguracionKafka.class

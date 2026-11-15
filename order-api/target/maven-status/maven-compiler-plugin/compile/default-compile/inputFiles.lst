@@ -1,6 +1,8 @@
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\aplicacion\dto\CrearOrdenRequest.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\aplicacion\dto\ItemRequest.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\aplicacion\OrdenService.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\configuracion\ConfiguracionDominio.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\configuracion\ConfiguracionKafka.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\dominio\DescuentoPorMonto.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\dominio\Dinero.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\dominio\EstadoOrden.java
@@ -18,3 +20,15 @@ C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\domi
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\dominio\puertos\PublicadorEventos.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\dominio\SinDescuento.java
 C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\dominio\SinImpuesto.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\mensajeria\KafkaPublicador.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\mensajeria\PublicadorEventosLog.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\persistencia\ItemOrdenEntity.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\persistencia\OrdenEntity.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\persistencia\OrdenMapper.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\persistencia\OrdenRepositoryJpa.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\persistencia\SpringDataOrdenRepository.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\rest\ManejadorExcepciones.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\rest\OrdenController.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\rest\RespuestaError.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\infraestructura\rest\RespuestaOrden.java
+C:\Projects\Ecommerce-Hibrido\order-api\src\main\java\co\edu\proyecto\orden\OrdenApiApplication.java

@@ -26,6 +26,25 @@ public class Orden {
         this.total = Dinero.cero(items.get(0).precioUnitario().moneda());
     }
 
+    /**
+     * Reconstruye una orden ya existente a partir de su estado almacenado.
+     *
+     * <p><b>Exclusivo para adaptadores de persistencia.</b> No aplica las reglas de creación
+     * porque la orden ya las cumplió cuando nació. El código de aplicación debe crear
+     * órdenes siempre con {@link OrdenBuilder}.
+     */
+    public static Orden reconstituir(OrdenId id, String cliente, List<ItemOrden> items,
+                                     EstadoOrden estado, Dinero total) {
+        if (id == null || cliente == null || estado == null || total == null
+                || items == null || items.isEmpty()) {
+            throw new OrdenInvalidaException("Datos incompletos para reconstituir la orden " + id);
+        }
+        Orden orden = new Orden(id, cliente, items);
+        orden.estado = estado;
+        orden.total = total;
+        return orden;
+    }
+
     public void agregarProducto(ItemOrden item) {
         if (estado != EstadoOrden.CREADA) {
             throw new EstadoInvalidoException(
