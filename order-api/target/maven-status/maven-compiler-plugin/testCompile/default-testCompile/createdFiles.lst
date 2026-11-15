@@ -1,7 +1,0 @@
-co\edu\proyecto\orden\infraestructura\persistencia\OrdenMapperTest.class
-co\edu\proyecto\orden\dominio\ItemOrdenTest.class
-co\edu\proyecto\orden\dominio\DineroTest.class
-co\edu\proyecto\orden\dominio\OrdenTest.class
-co\edu\proyecto\orden\aplicacion\OrdenServiceTest.class
-co\edu\proyecto\orden\dominio\DescuentoPorMontoTest.class
-co\edu\proyecto\orden\aplicacion\OrdenServiceCalculoTest.class

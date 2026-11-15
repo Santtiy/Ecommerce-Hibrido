@@ -26,3 +26,9 @@ spring:
       properties:
         # Sin cabeceras con el nombre de la clase: el consumidor no depende del paquete del productor.
         spring.json.add.type.headers: false
+
+app:
+  cors:
+    # Origenes que pueden llamar a POST /order desde el navegador (separados por comas).
+    # '*' por ser una herramienta academica local; en la VM o en produccion se fija con CORS_ORIGINS.
+    origins: ${CORS_ORIGINS:*}

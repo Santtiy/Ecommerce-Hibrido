@@ -3,121 +3,434 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard de órdenes</title>
+  <title>Ecommerce Híbrido · Dashboard</title>
   <style>
+    /* Sin librerías ni CDN: la página debe funcionar sin internet dentro de un contenedor. */
     :root {
-      --fondo: #f5f6f8; --tarjeta: #ffffff; --texto: #1d2330; --suave: #6b7280; --borde: #e3e6eb;
-      --ok-fondo: #e3f5e8; --ok-texto: #156a35;
-      --fallo-fondo: #fde6e6; --fallo-texto: #a32020;
-      --pend-fondo: #eceef1; --pend-texto: #5f6672;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --fondo: #14171c; --tarjeta: #1c2027; --texto: #e6e8eb; --suave: #9aa1ab; --borde: #2c313a;
-        --ok-fondo: #173622; --ok-texto: #7fd99c;
-        --fallo-fondo: #3d1b1b; --fallo-texto: #f19a9a;
-        --pend-fondo: #2a2e36; --pend-texto: #a7adb7;
-      }
+      --fondo: #f3f4f6; --tarjeta: #ffffff; --texto: #111827; --suave: #4b5563; --borde: #d1d5db;
+      --acento: #1d4ed8; --acento-texto: #ffffff;
+      --ok-fondo: #dcfce7; --ok-texto: #14532d;
+      --fallo-fondo: #fee2e2; --fallo-texto: #7f1d1d;
+      --pend-fondo: #e5e7eb; --pend-texto: #374151;
+      --destacado: #fef3c7;
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0; padding: 24px 16px; background: var(--fondo); color: var(--texto);
-      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 24px 16px 48px; background: var(--fondo); color: var(--texto);
+      font: 18px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
-    main { max-width: 980px; margin: 0 auto; }
-    header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
-    h1 { font-size: 22px; margin: 0; }
-    .conexion { font-size: 13px; color: var(--suave); display: flex; align-items: center; gap: 6px; }
-    .punto { width: 9px; height: 9px; border-radius: 50%; background: var(--fallo-texto); }
-    .conectado .punto { background: var(--ok-texto); }
-    .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; overflow-x: auto; }
+    main { max-width: 1100px; margin: 0 auto; display: grid; gap: 20px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    h1 { font-size: 30px; margin: 0; }
+    h2 { font-size: 22px; margin: 0 0 14px; }
+    .conexion { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; }
+    .punto { width: 16px; height: 16px; border-radius: 50%; background: #dc2626; }
+    .conexion.conectado .punto { background: #16a34a; }
+
+    .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; }
+    .tabla-envoltura { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--borde); white-space: nowrap; }
-    th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); font-weight: 600; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--borde); }
+    th { font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); }
     tbody tr:last-child td { border-bottom: none; }
-    td.orden { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
-    .estado { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-    .ok { background: var(--ok-fondo); color: var(--ok-texto); }
-    .fallo { background: var(--fallo-fondo); color: var(--fallo-texto); }
-    .pendiente { background: var(--pend-fondo); color: var(--pend-texto); }
-    .vacio { padding: 28px 14px; text-align: center; color: var(--suave); }
-    tr.recien td { animation: destello 1.2s ease-out; }
-    @keyframes destello { from { background: var(--pend-fondo); } to { background: transparent; } }
+
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+    input {
+      font: inherit; color: inherit; background: #fff; width: 100%;
+      padding: 8px 10px; border: 1px solid #9ca3af; border-radius: 6px;
+    }
+    input:focus { outline: 3px solid #93c5fd; outline-offset: 1px; }
+    #cliente { max-width: 420px; }
+    #items td { padding: 6px; border: none; }
+    #items input[type=number] { text-align: right; }
+    .col-num { width: 160px; }
+
+    button {
+      font: inherit; font-weight: 600; cursor: pointer; border-radius: 6px;
+      padding: 8px 16px; border: 1px solid #9ca3af; background: #fff; color: var(--texto);
+    }
+    button:hover { background: #f3f4f6; }
+    button.primario { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); font-size: 20px; padding: 10px 24px; }
+    button.primario:hover { background: #1e40af; }
+    button.primario:disabled { opacity: .6; cursor: wait; }
+    button.quitar { padding: 6px 12px; color: var(--fallo-texto); }
+    .fila-botones { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
+
+    .totales { margin-top: 16px; display: grid; grid-template-columns: auto auto; justify-content: end; gap: 4px 24px; font-size: 20px; }
+    .totales dt { color: var(--suave); }
+    .totales dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+    .totales .total { font-weight: 700; }
+    .nota { color: var(--suave); font-size: 15px; margin: 6px 0 0; text-align: right; }
+
+    .ejemplos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .ejemplos button { text-align: left; display: grid; gap: 2px; padding: 10px 14px; }
+    .ejemplos small { font-weight: 400; color: var(--suave); font-size: 15px; }
+    .ejemplos button.invalida { border-color: #f87171; }
+
+    #respuesta { border-left: 6px solid var(--borde); }
+    #respuesta.ok { border-left-color: #16a34a; }
+    #respuesta.fallo { border-left-color: #dc2626; }
+    #respuesta .codigo { font-size: 24px; font-weight: 700; }
+    #respuesta pre {
+      margin: 10px 0 0; padding: 10px; background: var(--fondo); border-radius: 6px;
+      font: 15px/1.4 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all;
+    }
+    .vacio { padding: 24px 12px; text-align: center; color: var(--suave); }
+
+    .cabecera-tabla { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .cabecera-tabla h2 { margin: 0; }
+    .contador { font-size: 20px; }
+    .contador strong { font-size: 26px; }
+    td.orden { font-family: ui-monospace, Consolas, monospace; cursor: help; }
+    td.hora { font-variant-numeric: tabular-nums; color: var(--suave); }
+    .estado { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 16px; font-weight: 600; }
+    .estado.ok { background: var(--ok-fondo); color: var(--ok-texto); }
+    .estado.fallo { background: var(--fallo-fondo); color: var(--fallo-texto); }
+    .estado.pendiente { background: var(--pend-fondo); color: var(--pend-texto); }
+
+    /* Destacado de la fila actualizada (RF-12): el fondo se pone amarillo al instante y vuelve
+       al normal con una transición suave, para que se vea qué fila acaba de cambiar. */
+    #ordenes tbody td { transition: background-color 1.8s ease-out; }
+    #ordenes tbody tr.destacada td { background-color: var(--destacado); transition: none; }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Órdenes en proceso</h1>
-    <div id="conexion" class="conexion"><span class="punto"></span><span id="texto-conexion">Conectando…</span></div>
+    <h1>Ecommerce Híbrido — Dashboard de órdenes</h1>
+    <div id="conexion" class="conexion" role="status">
+      <span class="punto"></span><span id="texto-conexion">desconectado</span>
+    </div>
   </header>
-  <div class="tarjeta">
-    <table>
-      <thead><tr><th>Orden</th><th>Pago</th><th>Stock</th><th>Correo</th></tr></thead>
-      <tbody id="filas"><tr id="sin-ordenes"><td colspan="4" class="vacio">Aún no llegan órdenes.</td></tr></tbody>
-    </table>
-  </div>
+
+  <!-- ───────────── Ejemplos rápidos para la demostración ───────────── -->
+  <section class="tarjeta">
+    <h2>Ejemplos rápidos</h2>
+    <div class="ejemplos">
+      <button type="button" data-ejemplo="normal">Caso normal<small>Libro ×1 a 150.000 → todo exitoso</small></button>
+      <button type="button" data-ejemplo="pago">Pago rechazado RN-11<small>Televisor ×1 a 1.500.000 → PAYMENT_FAILED</small></button>
+      <button type="button" data-ejemplo="stock">Sin stock RN-12<small>Memoria USB ×15 a 20.000 → STOCK_OUT_OF_STOCK</small></button>
+      <button type="button" data-ejemplo="sin-items" class="invalida">Sin items<small>Envía una lista vacía → 400</small></button>
+      <button type="button" data-ejemplo="cantidad-cero" class="invalida">Cantidad cero<small>Envía cantidad 0 → 400</small></button>
+    </div>
+  </section>
+
+  <!-- ───────────── Formulario de nueva orden ───────────── -->
+  <section class="tarjeta">
+    <h2>Nueva orden</h2>
+    <form id="formulario" novalidate>
+      <label for="cliente">Cliente</label>
+      <input id="cliente" type="text" autocomplete="off" placeholder="Nombre del cliente">
+
+      <div class="tabla-envoltura" style="margin-top:16px">
+        <table id="items">
+          <thead><tr><th>SKU</th><th>Nombre</th><th class="col-num">Cantidad</th><th class="col-num">Precio unitario</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="fila-botones">
+        <button type="button" id="anadir-fila">+ Añadir ítem</button>
+      </div>
+
+      <!-- Cálculo SOLO informativo para el usuario: el total autoritativo lo calcula siempre el
+           dominio en el servidor (Orden.calcularTotal) y este valor nunca se envía al backend. -->
+      <dl class="totales">
+        <dt>Subtotal</dt><dd id="subtotal">$ 0</dd>
+        <dt>Descuento aplicado (10 % si supera 100.000)</dt><dd id="descuento">$ 0</dd>
+        <dt class="total">Total con IVA (19 %)</dt><dd id="total" class="total">$ 0</dd>
+      </dl>
+      <p class="nota">Estimación del navegador. El total real lo calcula el servidor.</p>
+
+      <div class="fila-botones">
+        <button type="submit" id="enviar" class="primario">Enviar orden</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ───────────── Respuesta de la petición ───────────── -->
+  <section id="respuesta" class="tarjeta" aria-live="polite">
+    <h2>Respuesta de order-api</h2>
+    <div id="respuesta-contenido" class="vacio">Aún no se ha enviado ninguna orden.</div>
+  </section>
+
+  <!-- ───────────── Órdenes en vivo (WebSocket) ───────────── -->
+  <section class="tarjeta">
+    <div class="cabecera-tabla">
+      <h2>Órdenes en vivo</h2>
+      <div class="contador">Órdenes recibidas: <strong id="contador">0</strong></div>
+    </div>
+    <div class="tabla-envoltura">
+      <table id="ordenes">
+        <thead><tr><th>Orden</th><th>Pago</th><th>Stock</th><th>Correo</th><th>Actualizada</th></tr></thead>
+        <tbody id="filas"><tr id="sin-ordenes"><td colspan="5" class="vacio">Aún no llegan órdenes.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
 </main>
+
 <script>
-  // Servida por el propio dashboard se usa su mismo host; abierta como archivo, localhost:8081.
-  const URL_WS = location.protocol.startsWith('http')
-    ? 'ws://' + location.host + '/ws/ordenes'
-    : 'ws://localhost:8081/ws/ordenes';
+  // Las direcciones se construyen con el host desde el que se sirve la página, nunca con un
+  // nombre fijo: así funciona igual en el portátil que en la máquina virtual (IP de la VM).
+  const HOST = window.location.hostname;
+  const API  = `http://${HOST}:8080/order`;
+  const WS   = `ws://${HOST}:8081/ws/ordenes`;
+  const SEGUNDOS_REINTENTO = 3;
+
+  const formatoPesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 2 });
+  const $ = (id) => document.getElementById(id);
+
+  // ════════════════════════ Formulario ════════════════════════
+
+  const cuerpoItems = document.querySelector('#items tbody');
+
+  function crearInput(tipo, clase, valor, extra = {}) {
+    const input = document.createElement('input');
+    input.type = tipo;
+    input.className = clase;
+    input.value = valor;
+    Object.assign(input, extra);
+    input.addEventListener('input', recalcular);
+    const td = document.createElement('td');
+    td.append(input);
+    return td;
+  }
+
+  function anadirFila(item = { sku: '', nombre: '', cantidad: 1, precioUnitario: '' }) {
+    const fila = document.createElement('tr');
+    const quitar = document.createElement('button');
+    quitar.type = 'button';
+    quitar.className = 'quitar';
+    quitar.textContent = 'Eliminar';
+    quitar.addEventListener('click', () => { fila.remove(); recalcular(); });
+    const tdQuitar = document.createElement('td');
+    tdQuitar.append(quitar);
+    fila.append(
+      crearInput('text', 'sku', item.sku, { placeholder: 'SKU', ariaLabel: 'SKU' }),
+      crearInput('text', 'nombre', item.nombre, { placeholder: 'Nombre', ariaLabel: 'Nombre' }),
+      crearInput('number', 'cantidad', item.cantidad, { min: 0, step: 1, ariaLabel: 'Cantidad' }),
+      crearInput('number', 'precio', item.precioUnitario, { min: 0, step: 'any', placeholder: '0', ariaLabel: 'Precio unitario' }),
+      tdQuitar);
+    cuerpoItems.append(fila);
+    recalcular();
+  }
+
+  /** Convierte un campo numérico en número, o null si está vacío o no es válido. */
+  function numero(texto) {
+    if (texto.trim() === '') return null;
+    const n = Number(texto);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** Lee el formulario tal como lo escribió el usuario. Sin validar: eso lo hace el servidor. */
+  function leerOrden() {
+    const items = [...cuerpoItems.rows].map((fila) => ({
+      sku: fila.querySelector('.sku').value.trim(),
+      nombre: fila.querySelector('.nombre').value.trim(),
+      cantidad: numero(fila.querySelector('.cantidad').value),
+      precioUnitario: numero(fila.querySelector('.precio').value),
+    }));
+    return { cliente: $('cliente').value.trim(), items };
+  }
+
+  // AVISO: este cálculo es solo informativo para el usuario. Replica las reglas del dominio
+  // (suma de subtotales; 10 % de descuento si supera 100.000 (RN-14); luego 19 % de IVA), pero el
+  // total autoritativo lo calcula SIEMPRE el dominio en el servidor y este valor NUNCA se envía.
+  // Se trabaja en centavos enteros para redondear a 2 decimales como Dinero (HALF_UP).
+  function recalcular() {
+    const centavos = (pesos) => Math.round(pesos * 100);
+    const subtotal = leerOrden().items.reduce(
+      (suma, it) => suma + centavos((it.cantidad ?? 0) * (it.precioUnitario ?? 0)), 0);
+    const descuento = subtotal > centavos(100000) ? Math.round(subtotal * 10 / 100) : 0;
+    const base = subtotal - descuento;
+    const total = base + Math.round(base * 19 / 100);
+    $('subtotal').textContent = formatoPesos.format(subtotal / 100);
+    $('descuento').textContent = (descuento > 0 ? '− ' : '') + formatoPesos.format(descuento / 100);
+    $('total').textContent = formatoPesos.format(total / 100);
+  }
+
+  function rellenar(cliente, items) {
+    $('cliente').value = cliente;
+    cuerpoItems.replaceChildren();
+    items.forEach(anadirFila);
+    recalcular();
+  }
+
+  // ════════════════════════ Ejemplos rápidos ════════════════════════
+
+  const EJEMPLOS = {
+    'normal':        { enviar: false, items: [{ sku: 'LIB-001', nombre: 'Libro', cantidad: 1, precioUnitario: 150000 }] },
+    'pago':          { enviar: false, items: [{ sku: 'TV-001', nombre: 'Televisor', cantidad: 1, precioUnitario: 1500000 }] },
+    'stock':         { enviar: false, items: [{ sku: 'USB-001', nombre: 'Memoria USB', cantidad: 15, precioUnitario: 20000 }] },
+    'sin-items':     { enviar: true,  items: [] },
+    'cantidad-cero': { enviar: true,  items: [{ sku: 'LIB-001', nombre: 'Libro', cantidad: 0, precioUnitario: 150000 }] },
+  };
+
+  document.querySelectorAll('[data-ejemplo]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const ejemplo = EJEMPLOS[boton.dataset.ejemplo];
+      rellenar('Cliente Demo', ejemplo.items);
+      if (ejemplo.enviar) enviarOrden();
+    });
+  });
+
+  // ════════════════════════ Envío a order-api ════════════════════════
+
+  function mostrarRespuesta(tipo, nodos) {
+    $('respuesta').className = 'tarjeta ' + tipo;
+    $('respuesta-contenido').className = '';
+    $('respuesta-contenido').replaceChildren(...nodos);
+  }
+
+  function parrafo(texto, clase) {
+    const p = document.createElement('p');
+    p.style.margin = '6px 0';
+    if (clase) p.className = clase;
+    p.textContent = texto;   // textContent: lo que devuelve el servidor nunca se interpreta como HTML
+    return p;
+  }
+
+  function bloqueJson(titulo, objeto) {
+    const detalles = document.createElement('details');
+    const resumen = document.createElement('summary');
+    resumen.textContent = titulo;
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(objeto, null, 2);
+    detalles.append(resumen, pre);
+    return detalles;
+  }
+
+  async function enviarOrden() {
+    const orden = leerOrden();
+    const boton = $('enviar');
+    boton.disabled = true;
+    mostrarRespuesta('', [parrafo('Enviando a ' + API + '…')]);
+    try {
+      const respuesta = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orden),
+      });
+      let cuerpo = null;
+      try { cuerpo = await respuesta.json(); } catch { /* respuesta sin JSON */ }
+
+      const nodos = [parrafo('HTTP ' + respuesta.status, 'codigo')];
+      if (respuesta.status === 202 && cuerpo) {
+        nodos.push(parrafo('orderId: ' + cuerpo.orderId));
+        nodos.push(parrafo('Total calculado por el servidor: ' + formatoPesos.format(cuerpo.total) + ' ' + (cuerpo.moneda ?? '')));
+        nodos.push(parrafo('Estado: ' + cuerpo.estado + '. Siga su avance en la tabla de órdenes en vivo.'));
+      } else if (cuerpo) {
+        // Formato de ManejadorExcepciones: {codigo, mensaje, detalles[], momento}
+        nodos.push(parrafo(cuerpo.mensaje ?? 'Error'));
+        if (Array.isArray(cuerpo.detalles) && cuerpo.detalles.length > 0) {
+          const lista = document.createElement('ul');
+          cuerpo.detalles.forEach((campo) => {
+            const li = document.createElement('li');
+            li.textContent = campo;
+            lista.append(li);
+          });
+          nodos.push(lista);
+        }
+      }
+      nodos.push(bloqueJson('Cuerpo enviado', orden));
+      if (cuerpo) nodos.push(bloqueJson('Cuerpo recibido', cuerpo));
+      mostrarRespuesta(respuesta.ok ? 'ok' : 'fallo', nodos);
+    } catch (error) {
+      // fetch solo lanza si no hubo respuesta HTTP: servidor caído, puerto cerrado o CORS rechazado.
+      mostrarRespuesta('fallo', [
+        parrafo('Sin respuesta', 'codigo'),
+        parrafo('No se pudo conectar con order-api en ' + API + '. Es posible que order-api no esté arrancado (ops\\arrancar.ps1).'),
+        parrafo('Detalle técnico: ' + error.message),
+      ]);
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  $('formulario').addEventListener('submit', (evento) => { evento.preventDefault(); enviarOrden(); });
+  $('anadir-fila').addEventListener('click', () => anadirFila());
+
+  // ════════════════════════ Tabla en vivo (WebSocket) ════════════════════════
 
   const EXITOS = ['PAYMENT_SUCCESS', 'STOCK_RESERVED', 'EMAIL_SENT'];
   const FALLOS = ['PAYMENT_FAILED', 'STOCK_OUT_OF_STOCK'];
-  const filas = document.getElementById('filas');
+  const filas = $('filas');
+  const formatoHora = new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
-  function clase(estado) {
+  function claseEstado(estado) {
     if (EXITOS.includes(estado)) return 'ok';
     if (FALLOS.includes(estado)) return 'fallo';
     return 'pendiente';
   }
 
-  function celdaEstado(td, estado) {
+  function pintarEstado(td, estado) {
+    if (td.dataset.valor === estado) return false;
+    td.dataset.valor = estado;
     const etiqueta = document.createElement('span');
-    etiqueta.className = 'estado ' + clase(estado);
-    etiqueta.textContent = estado;   // textContent: nunca se interpreta como HTML
+    etiqueta.className = 'estado ' + claseEstado(estado);
+    etiqueta.textContent = estado;
     td.replaceChildren(etiqueta);
+    return true;
+  }
+
+  function destacar(fila) {
+    // Se pone el fondo destacado sin transición y, en el siguiente cuadro, se quita la clase:
+    // el fondo vuelve al normal con la transición definida en el CSS.
+    fila.classList.add('destacada');
+    void fila.offsetWidth;
+    requestAnimationFrame(() => fila.classList.remove('destacada'));
   }
 
   function actualizarFila(orderId, estado) {
-    document.getElementById('sin-ordenes')?.remove();
-    let fila = document.querySelector('tr[data-orden="' + CSS.escape(orderId) + '"]');
+    $('sin-ordenes')?.remove();
+    let fila = filas.querySelector('tr[data-orden="' + CSS.escape(orderId) + '"]');
     if (!fila) {
       fila = document.createElement('tr');
       fila.dataset.orden = orderId;
       const celdaId = document.createElement('td');
       celdaId.className = 'orden';
-      celdaId.textContent = orderId;
-      fila.append(celdaId, document.createElement('td'), document.createElement('td'), document.createElement('td'));
-      filas.prepend(fila);
+      celdaId.textContent = orderId.slice(0, 8);
+      celdaId.title = orderId;
+      const celdaHora = document.createElement('td');
+      celdaHora.className = 'hora';
+      fila.append(celdaId, document.createElement('td'), document.createElement('td'), document.createElement('td'), celdaHora);
+      filas.prepend(fila);   // la orden más reciente arriba
+      $('contador').textContent = filas.rows.length;
     }
-    celdaEstado(fila.children[1], estado.payment);
-    celdaEstado(fila.children[2], estado.stock);
-    celdaEstado(fila.children[3], estado.email);
-    fila.classList.remove('recien'); void fila.offsetWidth; fila.classList.add('recien');
+    // Se evalúan los tres (sin cortocircuito) y solo se destaca si algo cambió de verdad;
+    // así la foto inicial que reenvía el servidor al reconectar no ilumina filas sin cambios.
+    const cambios = [
+      pintarEstado(fila.cells[1], estado.payment),
+      pintarEstado(fila.cells[2], estado.stock),
+      pintarEstado(fila.cells[3], estado.email),
+    ];
+    if (cambios.some(Boolean)) {
+      fila.cells[4].textContent = formatoHora.format(new Date());
+      destacar(fila);
+    }
   }
 
-  function mostrarConexion(conectado, texto) {
-    document.getElementById('conexion').classList.toggle('conectado', conectado);
-    document.getElementById('texto-conexion').textContent = texto;
+  function mostrarConexion(conectado) {
+    $('conexion').classList.toggle('conectado', conectado);
+    $('texto-conexion').textContent = conectado ? 'conectado' : 'desconectado';
+    $('conexion').title = conectado ? WS : 'Reintentando cada ' + SEGUNDOS_REINTENTO + ' s';
   }
 
   function conectar() {
-    const ws = new WebSocket(URL_WS);
-    ws.onopen = () => mostrarConexion(true, 'Conectado a ' + URL_WS);
+    const ws = new WebSocket(WS);
+    ws.onopen = () => mostrarConexion(true);
     ws.onmessage = (evento) => {
       // {"<orderId>": {"payment": "...", "stock": "...", "email": "..."}} (una o varias claves)
       const datos = JSON.parse(evento.data);
       for (const [orderId, estado] of Object.entries(datos)) actualizarFila(orderId, estado);
     };
+    // onclose también se dispara cuando el intento de conexión falla: se reintenta cada 3 s.
     ws.onclose = () => {
-      mostrarConexion(false, 'Desconectado; reintentando…');
-      setTimeout(conectar, 2000);
+      mostrarConexion(false);
+      setTimeout(conectar, SEGUNDOS_REINTENTO * 1000);
     };
   }
 
+  anadirFila();   // el formulario empieza con una fila
   conectar();
 </script>
 </body>
