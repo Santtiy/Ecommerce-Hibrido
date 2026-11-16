@@ -50,6 +50,7 @@ services:
   postgres-db:
     image: postgres:16-alpine
     container_name: postgres-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ecommerce
       POSTGRES_USER: ecommerce
@@ -74,6 +75,7 @@ services:
   kafka:
     image: apache/kafka:3.7.0
     container_name: kafka
+    restart: unless-stopped
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -118,6 +120,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
+    restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ecommerce
       RABBITMQ_DEFAULT_PASS: ecommerce
