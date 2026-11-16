@@ -1,7 +1,51 @@
-# Infraestructura de las etapas 2 y 3: PostgreSQL y Kafka (modo KRaft, sin ZooKeeper).
-# Las aplicaciones (order-api, analytics-service) se arrancan desde IntelliJ, fuera de Docker.
+# Etapa 7: sistema completo en contenedores. Diez servicios en la red ecommerce-net:
+#   infraestructura (3): postgres-db, kafka, rabbitmq
+#   microservicios  (7): order-api, order-processor, billing-worker, inventory-worker,
+#                        notification-worker, analytics-service, dashboard-aggregator
+#
+#   docker compose build            # construye las siete imagenes con el Dockerfile unico
+#   docker compose up -d --wait     # levanta todo y espera a que este sano
+#   docker compose down             # detiene y elimina los contenedores (los volumenes se conservan)
+#
+# DIRECCIONES: dentro de la red se usan los NOMBRES DE SERVICIO (kafka, postgres-db, rabbitmq).
+# Cada contenedor tiene su propio localhost, que es el mismo contenedor: "localhost" nunca
+# encontraria a los demas.
+#
+# PUERTOS PUBLICADOS AL HOST (relevante para la etapa de firewall): de los microservicios, SOLO
+# order-api (8080) y dashboard-aggregator (8081). order-processor, los tres workers y
+# analytics-service NO publican ningun puerto: solo hablan con Kafka y RabbitMQ por la red interna
+# y no son alcanzables desde fuera de Docker. Los puertos de la infraestructura (5433, 9092, 29092,
+# 5672, 15672) siguen publicados para depurar y para arrancar servicios desde IntelliJ.
+#
+# LIMITES (RNF-08), pensados para una VM de 8 GB y 4 vCPU. Total: 4368M y 4.5 CPU.
+# ADVERTENCIA: fijar -Xmx en JAVA_OPTS NO es opcional. Sin el, la JVM reclama como heap hasta la
+# cuarta parte de la memoria que ve, el proceso supera el limite del contenedor y Docker lo mata
+# con exit code 137 (OOM kill). Es el fallo mas frecuente al contenerizar Spring Boot con limites
+# ajustados. El -Xmx de cada servicio deja margen para metaspace, hilos y buffers fuera del heap.
+
+# Bloques comunes de los siete microservicios (anclas YAML; los campos x-* los ignora compose).
+x-microservicio: &microservicio
+  build: &build
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  networks:
+    - ecommerce-net
+
+x-kafka: &kafka-env
+  KAFKA_BOOTSTRAP: kafka:9092              # listener INTERNAL, no localhost:29092
+
+x-rabbit: &rabbit-env
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: 5672
+  SPRING_RABBITMQ_USERNAME: ecommerce
+  SPRING_RABBITMQ_PASSWORD: ecommerce
 
 services:
+
+  # ===========================================================================================
+  # Infraestructura
+  # ===========================================================================================
 
   postgres-db:
     image: postgres:16-alpine
@@ -12,8 +56,7 @@ services:
       POSTGRES_PASSWORD: ecommerce
     ports:
       # 5433 en el host: en Windows hay un PostgreSQL 18 nativo (servicio postgresql-x64-18) ocupando
-      # el 5432, y las conexiones a localhost:5432 llegaban a el en lugar de a este contenedor.
-      # Dentro de la red Docker se sigue usando postgres-db:5432.
+      # el 5432. Dentro de la red Docker se sigue usando postgres-db:5432.
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -22,6 +65,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits: { memory: 384M, cpus: "0.5" }
     networks:
       - ecommerce-net
 
@@ -31,11 +77,9 @@ services:
     ports:
       - "9092:9092"
       - "29092:29092"
-    # DOS listeners porque Kafka le dice a cada cliente a qué dirección reconectarse:
-    #  - INTERNAL (kafka:9092): para los contenedores de la misma red Docker (etapa 7).
+    # DOS listeners porque Kafka le dice a cada cliente a que direccion reconectarse:
+    #  - INTERNAL (kafka:9092): para los contenedores de la red ecommerce-net.
     #  - EXTERNAL (localhost:29092): para las aplicaciones que se arrancan desde IntelliJ en el host.
-    # Con un único listener anunciado como "kafka:9092", las aplicaciones del host recibirían un
-    # nombre que no saben resolver y no podrían conectarse.
     # CONTROLLER (9093) es interno de KRaft y no se publica.
     environment:
       KAFKA_NODE_ID: 1
@@ -51,19 +95,26 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Sin creacion automatica de topics. Impide que un consumidor cree new_orders por accidente
+      # con UNA sola particion si arranca antes que order-api. Esa carrera ya ocurrio: analytics-service
+      # quedo leyendo solo la particion 0 y perdia un tercio de los eventos sin lanzar ningun error.
+      # Ahora cada topic lo crea solo su productor (order-api crea new_orders con 3 particiones;
+      # cada worker crea su topic de resultados).
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_HEAP_OPTS: "-Xmx768m -Xms512m"
-    # Permite que "docker compose up --wait" espere a que el broker responda de verdad.
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
       interval: 10s
       timeout: 10s
       retries: 12
       start_period: 15s
+    deploy:
+      resources:
+        limits: { memory: 1200M, cpus: "1.0" }
     networks:
       - ecommerce-net
 
-  # Etapa 4: broker de comandos. 5672 = protocolo AMQP para las aplicaciones;
-  # 15672 = interfaz web de administración (http://localhost:15672).
+  # Broker de comandos. 5672 = AMQP; 15672 = consola web (http://localhost:15672).
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
@@ -79,11 +130,151 @@ services:
       timeout: 10s
       retries: 10
       start_period: 20s
+    deploy:
+      resources:
+        limits: { memory: 512M, cpus: "0.5" }
     networks:
       - ecommerce-net
 
+  # ===========================================================================================
+  # Microservicios. Orden de arranque (sustituye a las "tandas" de ops\arrancar.ps1):
+  #   1. workers y dashboard-aggregator, en cuanto Kafka/RabbitMQ estan sanos
+  #   2. order-api (crea new_orders con 3 particiones) cuando ademas PostgreSQL esta sano
+  #   3. order-processor y analytics-service, SOLO cuando order-api esta sano (new_orders ya existe)
+  # ===========================================================================================
+
+  billing-worker:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: billing-worker } }
+    container_name: billing-worker
+    environment:
+      <<: [*kafka-env, *rabbit-env]
+      JAVA_OPTS: "-Xmx160m"
+    depends_on:
+      kafka: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 288M, cpus: "0.25" }
+
+  inventory-worker:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: inventory-worker } }
+    container_name: inventory-worker
+    environment:
+      <<: [*kafka-env, *rabbit-env]
+      JAVA_OPTS: "-Xmx160m"
+    depends_on:
+      kafka: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 288M, cpus: "0.25" }
+
+  notification-worker:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: notification-worker } }
+    container_name: notification-worker
+    environment:
+      <<: [*kafka-env, *rabbit-env]
+      JAVA_OPTS: "-Xmx160m"
+    depends_on:
+      kafka: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 288M, cpus: "0.25" }
+
+  dashboard-aggregator:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: dashboard-aggregator } }
+    container_name: dashboard-aggregator
+    environment:
+      <<: *kafka-env
+      JAVA_OPTS: "-Xmx224m"
+    ports:
+      - "8081:8081"                        # pagina del dashboard + WebSocket /ws/ordenes
+    depends_on:
+      kafka: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8081/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { memory: 384M, cpus: "0.5" }
+
+  order-api:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: order-api } }
+    container_name: order-api
+    environment:
+      <<: *kafka-env
+      DB_URL: jdbc:postgresql://postgres-db:5432/ecommerce
+      DB_USER: ecommerce
+      DB_PASSWORD: ecommerce
+      CORS_ORIGINS: "*"
+      # user.language=es: la imagen Alpine arranca la JVM en ingles y los mensajes de validacion
+      # de los 400 ("debe ser mayor que o igual a 1") saldrian en ingles.
+      JAVA_OPTS: "-Xmx224m -Duser.language=es -Duser.country=CO"
+    ports:
+      - "8080:8080"                        # POST /order
+    depends_on:
+      postgres-db: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    # Sano = el puerto 8080 acepta conexiones, lo que ocurre despues de que Spring creo new_orders.
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    deploy:
+      resources:
+        limits: { memory: 384M, cpus: "0.5" }
+
+  order-processor:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: order-processor } }
+    container_name: order-processor
+    environment:
+      <<: [*kafka-env, *rabbit-env]
+      JAVA_OPTS: "-Xmx192m"
+    depends_on:
+      kafka: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      order-api: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 320M, cpus: "0.25" }
+
+  analytics-service:
+    <<: *microservicio
+    build: { <<: *build, args: { MODULO: analytics-service } }
+    container_name: analytics-service
+    environment:
+      <<: *kafka-env
+      # Registro del modulo de Sistemas Operativos, dentro del volumen analytics-datos.
+      ARCHIVO_ORDENES: /app/datos/ordenes.log
+      JAVA_OPTS: "-Xmx192m"
+    # Volumen nombrado: el archivo sobrevive a "docker compose down/up" y se inspecciona desde fuera:
+    #   docker exec analytics-service tail /app/datos/ordenes.log
+    #   docker run --rm -v analytics-datos:/d alpine tail /d/ordenes.log
+    volumes:
+      - analytics-datos:/app/datos
+    depends_on:
+      kafka: { condition: service_healthy }
+      order-api: { condition: service_healthy }
+    deploy:
+      resources:
+        limits: { memory: 320M, cpus: "0.5" }
+
 volumes:
   postgres-data:
+  analytics-datos:
+    name: analytics-datos
 
 networks:
   ecommerce-net:

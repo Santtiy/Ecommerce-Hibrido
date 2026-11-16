@@ -1,0 +1,12 @@
+# docker compose ps  (2026-11-15 18:01:01, tras la segunda ronda de arranque en frio)
+NAME                   IMAGE                                    COMMAND                  SERVICE                CREATED              STATUS                        PORTS
+analytics-service      ecommerce-hibrido-analytics-service      "sh -c 'exec java $J…"   analytics-service      About a minute ago   Up 45 seconds                 
+billing-worker         ecommerce-hibrido-billing-worker         "sh -c 'exec java $J…"   billing-worker         About a minute ago   Up About a minute             
+dashboard-aggregator   ecommerce-hibrido-dashboard-aggregator   "sh -c 'exec java $J…"   dashboard-aggregator   About a minute ago   Up About a minute (healthy)   0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+inventory-worker       ecommerce-hibrido-inventory-worker       "sh -c 'exec java $J…"   inventory-worker       About a minute ago   Up About a minute             
+kafka                  apache/kafka:3.7.0                       "/__cacert_entrypoin…"   kafka                  About a minute ago   Up About a minute (healthy)   0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp, 0.0.0.0:29092->29092/tcp, [::]:29092->29092/tcp
+notification-worker    ecommerce-hibrido-notification-worker    "sh -c 'exec java $J…"   notification-worker    About a minute ago   Up About a minute             
+order-api              ecommerce-hibrido-order-api              "sh -c 'exec java $J…"   order-api              About a minute ago   Up About a minute (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+order-processor        ecommerce-hibrido-order-processor        "sh -c 'exec java $J…"   order-processor        About a minute ago   Up 45 seconds                 
+postgres-db            postgres:16-alpine                       "docker-entrypoint.s…"   postgres-db            About a minute ago   Up About a minute (healthy)   0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+rabbitmq               rabbitmq:3.13-management-alpine          "docker-entrypoint.s…"   rabbitmq               About a minute ago   Up About a minute (healthy)   0.0.0.0:5672->5672/tcp, [::]:5672->5672/tcp, 0.0.0.0:15672->15672/tcp, [::]:15672->15672/tcp

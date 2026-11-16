@@ -1,0 +1,30 @@
+################ Arranque en frio, ronda 2 (2026-11-15 17:59:34) ################
+== docker compose down
+ Container kafka Removed 
+ Network ecommerce-net Removing 
+ Network ecommerce-net Removed 
+== docker compose up -d --wait
+exit=0 en 39 s
+NAME                   STATUS
+analytics-service      Up 1 second
+billing-worker         Up 28 seconds
+dashboard-aggregator   Up 30 seconds (healthy)
+inventory-worker       Up 28 seconds
+kafka                  Up 36 seconds (healthy)
+notification-worker    Up 28 seconds
+order-api              Up 30 seconds (healthy)
+order-processor        Up 1 second
+postgres-db            Up 36 seconds (healthy)
+rabbitmq               Up 36 seconds (healthy)
+
+== Orden enviada inmediatamente (18:00:18)
+{"orderId":"eb6c18e6-0edc-4709-90f8-cecc5cf97ac1","estado":"CREADA","total":160650.00,"moneda":"COP"} HTTP=202
+
+== Resultado tras 64 s desde el up
+Dashboard: EstadoDashboard[payment=PAYMENT_SUCCESS, stock=STOCK_RESERVED, email=EMAIL_SENT]
+analytics-service: linea en /app/datos/ordenes.log (total de lineas: 5, el volumen sobrevive al down)
+PostgreSQL: CREADA 160650.00
+RESULTADO RONDA 2: OK, flujo completo sin intervencion manual
+Reinicios: order-api=0 order-processor=0 billing-worker=0 inventory-worker=0 notification-worker=0 analytics-service=0 dashboard-aggregator=0 
+
+Validacion 400 (locale es): {"codigo":400,"mensaje":"La solicitud tiene campos inválidos","detalles":["items[0].cantidad: debe ser mayor que o igual a 1"],"momento":"2026-11-15T23:00:52.717545131Z"}

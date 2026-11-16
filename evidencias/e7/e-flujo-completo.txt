@@ -1,0 +1,56 @@
+# Flujo completo en contenedores (2026-11-15 17:57:13). Ordenes enviadas desde 2026-11-15 22:56:36 UTC
+
+== PostgreSQL: ordenes creadas en esta prueba
+                  id                  | estado | total_monto 
+--------------------------------------+--------+-------------
+ 5dcdb43d-ee18-401f-9066-35e4cbe80d1f | CREADA |   160650.00
+ feb0b374-f11b-40e3-b671-4d7de7e0e961 | CREADA |  1606500.00
+ f4a045cc-16be-40f3-9357-486f01b76371 | CREADA |   321300.00
+(3 rows)
+
+== Topic new_orders
+Topic: new_orders	TopicId: CxWe2EZIQVSeLtVuZ3dteg	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+
+== Topics existentes (auto-creacion desactivada)
+__consumer_offsets
+billing_events
+inventory_events
+new_orders
+notification_events
+
+== Grupo analytics-group
+TOPIC       PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG
+new_orders  2          1               1               0
+new_orders  0          1               1               0
+new_orders  1          1               1               0
+
+== Grupo processor-group
+TOPIC       PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG
+new_orders  0          1               1               0
+new_orders  2          1               1               0
+new_orders  1          1               1               0
+
+== Grupo dashboard-group
+TOPIC                PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG
+billing_events       0          3               3               0
+notification_events  0          3               3               0
+inventory_events     0          3               3               0
+
+== Resultados de los workers (logs)
+PAYMENT_SUCCESS en 1403 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+PAYMENT_FAILED en 399 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+PAYMENT_SUCCESS en 499 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+STOCK_RESERVED en 1110 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+STOCK_RESERVED en 392 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+STOCK_OUT_OF_STOCK en 205 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+EMAIL_SENT en 1213 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+EMAIL_SENT en 378 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1)
+EMAIL_SENT en 502 ms (hilo org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-2)
+
+== Archivo del modulo de SO en el volumen analytics-datos
+-rw-r--r-- 1 ecommerce ecommerce 235 Nov 15 22:56 /app/datos/ordenes.log
+3
+5dcdb43d-ee18-401f-9066-35e4cbe80d1f;160650.00;2026-11-15T22:56:38.381091141Z
+feb0b374-f11b-40e3-b671-4d7de7e0e961;1606500.00;2026-11-15T22:56:40.662722314Z
+f4a045cc-16be-40f3-9357-486f01b76371;321300.00;2026-11-15T22:56:42.854942348Z
+Volumen analytics-datos -> /var/lib/docker/volumes/analytics-datos/_data

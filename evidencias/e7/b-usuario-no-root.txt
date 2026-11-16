@@ -1,0 +1,11 @@
+# Usuario con el que corre cada microservicio (requisito: no root)
+$ docker exec order-api whoami
+ecommerce
+
+order-api             whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)
+order-processor       whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)
+billing-worker        whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)
+inventory-worker      whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)
+notification-worker   whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)
+analytics-service     whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)
+dashboard-aggregator  whoami=ecommerce  uid=100(ecommerce) gid=101(ecommerce) groups=101(ecommerce)

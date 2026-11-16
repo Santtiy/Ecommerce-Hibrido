@@ -1,0 +1,29 @@
+################ Arranque en frio, ronda 1 (2026-11-15 17:58:04) ################
+== docker compose down
+ Container kafka Removed 
+ Network ecommerce-net Removing 
+ Network ecommerce-net Removed 
+== docker compose up -d --wait
+exit=0 en 46 s
+NAME                   STATUS
+analytics-service      Up 1 second
+billing-worker         Up 34 seconds
+dashboard-aggregator   Up 35 seconds (healthy)
+inventory-worker       Up 34 seconds
+kafka                  Up 43 seconds (healthy)
+notification-worker    Up 34 seconds
+order-api              Up 35 seconds (healthy)
+order-processor        Up 1 second
+postgres-db            Up 43 seconds (healthy)
+rabbitmq               Up 44 seconds (healthy)
+
+== Orden enviada inmediatamente (17:58:54)
+{"orderId":"d71b9b9c-3042-447b-84a6-1c11345fa71c","estado":"CREADA","total":160650.00,"moneda":"COP"} HTTP=202
+
+== Resultado tras 76 s desde el up
+Dashboard: EstadoDashboard[payment=PAYMENT_SUCCESS, stock=STOCK_RESERVED, email=EMAIL_SENT]
+analytics-service: linea en /app/datos/ordenes.log (total de lineas: 4, el volumen sobrevive al down)
+PostgreSQL: CREADA 160650.00
+RESULTADO RONDA 1: OK, flujo completo sin intervencion manual
+Reinicios: order-api=0 order-processor=0 billing-worker=0 inventory-worker=0 notification-worker=0 analytics-service=0 dashboard-aggregator=0 
+

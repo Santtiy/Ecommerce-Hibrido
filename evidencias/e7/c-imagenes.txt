@@ -1,0 +1,34 @@
+# docker images
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+apache/kafka:3.7.0                              41c20d65b0a2        612MB          210MB   U    
+apache/kafka:4.3.1                              77e3df905404        686MB          239MB        
+confluentinc/cp-kafka:latest                    dfc55ae0803a        894MB          312MB        
+eclipse-temurin:21-jre-alpine                   51ab5e3302e7        287MB           75MB        
+eco-air-backend:1.0.0                           82159e8e59ec        446MB          156MB        
+ecommerce-hibrido-analytics-service:latest      6300614497e6        353MB          106MB   U    
+ecommerce-hibrido-billing-worker:latest         517c671940cc        356MB          108MB   U    
+ecommerce-hibrido-dashboard-aggregator:latest   74afb5aa2027        364MB          111MB   U    
+ecommerce-hibrido-inventory-worker:latest       2fbd50b9c80c        356MB          108MB   U    
+ecommerce-hibrido-notification-worker:latest    81c61a26bafb        356MB          108MB   U    
+ecommerce-hibrido-order-api:latest              c460fe911b84        423MB          140MB   U    
+ecommerce-hibrido-order-processor:latest        20b6c4dde8a1        356MB          108MB   U    
+kafka-websocket-alerts-backend:latest           e0a7e3a95d4e        185MB         45.4MB        
+kafka-websocket-alerts-processor:latest         8be8db544c11        185MB         45.4MB        
+kafka-websocket-dashboard-backend:latest        d19142b0f2f5        185MB         45.4MB        
+kafka-websocket-producer:latest                 93ad84578ae2        185MB         45.4MB        
+mongo:7                                         c53852c00c23       1.18GB          300MB        
+postgres:16-alpine                              f377d590e547        420MB          117MB   U    
+postgres:17-alpine                              d3244e8ce3f1        424MB          118MB        
+rabbitmq:3-management                           e582c0bc7766        392MB          118MB        
+rabbitmq:3.13-management-alpine                 606d8c0d6b3c        277MB         87.7MB   U    
+rabbitmq:4-management                           753099a19b57        448MB          140MB        
+
+# Imagenes del proyecto
+REPOSITORY                               TAG                      SIZE
+ecommerce-hibrido-dashboard-aggregator   latest                   364MB
+ecommerce-hibrido-order-processor        latest                   356MB
+ecommerce-hibrido-order-api              latest                   423MB
+ecommerce-hibrido-inventory-worker       latest                   356MB
+ecommerce-hibrido-analytics-service      latest                   353MB
+ecommerce-hibrido-billing-worker         latest                   356MB
+ecommerce-hibrido-notification-worker    latest                   356MB

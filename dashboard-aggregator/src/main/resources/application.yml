@@ -16,3 +16,7 @@ spring:
       auto-offset-reset: earliest
       properties:
         spring.json.trusted.packages: co.edu.proyecto.common.contratos
+        # Con KAFKA_AUTO_CREATE_TOPICS_ENABLE=false, si el dashboard arranca antes que los workers sus
+        # topics aun no existen. Refrescar metadatos cada 10 s (y no cada 5 min) hace que los detecte
+        # en cuanto el worker los crea, sin reiniciar nada.
+        metadata.max.age.ms: 10000

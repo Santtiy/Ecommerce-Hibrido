@@ -1,0 +1,12 @@
+# docker stats --no-stream  (2026-11-15 18:01:05)
+CONTAINER ID   NAME                   CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+9b6515c8ebf4   order-processor        1.01%     128.1MiB / 320MiB     40.02%    42.4kB / 42.8kB   0B / 32.8kB   25
+ba9d9ebd3297   analytics-service      1.01%     114.4MiB / 320MiB     35.76%    54.3kB / 53.7kB   0B / 32.8kB   23
+b5cf97faf54e   billing-worker         0.11%     126.6MiB / 288MiB     43.95%    9.96kB / 6.65kB   0B / 45.1kB   20
+3ad9fe6fc1b7   order-api              0.10%     214.7MiB / 384MiB     55.91%    28.8kB / 32.3kB   0B / 49.2kB   32
+4961275ef399   dashboard-aggregator   0.72%     143MiB / 384MiB       37.23%    113kB / 116kB     0B / 45.1kB   39
+1cd6ddc6f6de   inventory-worker       0.08%     125.4MiB / 288MiB     43.53%    10kB / 6.91kB     0B / 45.1kB   20
+08010c062118   notification-worker    0.09%     130.5MiB / 288MiB     45.30%    10.2kB / 7.18kB   0B / 45.1kB   20
+ae98deef776e   postgres-db            0.01%     37.95MiB / 384MiB     9.88%     28.9kB / 19.3kB   0B / 446kB    16
+7d3c40408dfe   rabbitmq               0.18%     130.4MiB / 512MiB     25.48%    15.7kB / 10.9kB   0B / 684kB    48
+d200e6f53055   kafka                  41.62%    302.5MiB / 1.172GiB   25.21%    224kB / 221kB     0B / 1.99MB   109
