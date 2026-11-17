@@ -16,6 +16,14 @@
     - Si un servicio no arranca, el script se detiene, muestra las ultimas 30 lineas de su log
       y NO lanza los siguientes.
 
+    - MODO DESARROLLO: la infraestructura (postgres-db, kafka, rabbitmq) se levanta con
+      docker-compose.yml + docker-compose.dev.yml, que publica 5433, 29092 y 5672 SOLO en
+      127.0.0.1. Los siete microservicios corren como jar, no en contenedor.
+    - Requiere .env en la raiz (plantilla: .env.example). Sus contrasenas se pasan a los jar como
+      DB_PASSWORD y RABBITMQ_PASSWORD, solo en este proceso; nunca se muestran.
+    - Si los contenedores de los microservicios (modo AWS) estan en marcha, el script se detiene
+      sin tocarlos y muestra el comando para pararlos.
+
     Nota: el archivo esta escrito sin tildes a proposito. PowerShell 5.1 lee los .ps1 sin BOM
     con la codificacion ANSI de Windows, y las tildes se verian corruptas.
 #>
@@ -33,9 +41,16 @@ param(
 $raiz        = Split-Path -Parent $PSScriptRoot
 $archivoPids = Join-Path $PSScriptRoot 'pids.txt'
 $compose     = Join-Path $raiz 'docker-compose.yml'
+$composeDev  = Join-Path $raiz 'docker-compose.dev.yml'     # capa de desarrollo (puertos en 127.0.0.1)
+$archivoEnv  = Join-Path $raiz '.env'
 $carpetaLogs = Join-Path $raiz 'logs'
 
 $contenedores   = @('postgres-db', 'kafka', 'rabbitmq')
+# Puertos que publica docker-compose.dev.yml y que usan por defecto los application.yml.
+$puertosInfra   = @{ 'postgres-db' = 5433; 'kafka' = 29092; 'rabbitmq' = 5672 }
+# Contenedores de los microservicios (modo AWS): no pueden convivir con los jar (8080/8081, grupos).
+$contenedoresApp = @('order-api', 'order-processor', 'billing-worker', 'inventory-worker',
+                     'notification-worker', 'dashboard-aggregator', 'analytics-service')
 $segundosMaximo = 90     # tiempo maximo que se espera a cada servicio
 
 # Servicios con su puerto HTTP. Los que no tienen servidor web llevan $null y se considera que
@@ -119,6 +134,32 @@ if (Test-Path $archivoPids) {
     Write-Host "pids.txt anterior sin procesos vivos: se sobrescribe."
 }
 
+# Credenciales: .env es obligatorio (docker compose lo exige y los jar necesitan las mismas claves).
+# Se leen las dos variables SIN mostrarlas y se exportan solo en este proceso: Start-Process hereda
+# el entorno, asi que los jar las reciben como DB_PASSWORD y RABBITMQ_PASSWORD (application.yml).
+if (-not (Test-Path $archivoEnv)) {
+    Stop-ConError "No existe .env. Crealo con: Copy-Item .env.example .env  (y rellena POSTGRES_PASSWORD y RABBITMQ_PASSWORD)."
+}
+$valoresEnv = @{}
+foreach ($linea in Get-Content $archivoEnv) {
+    if ($linea -match '^\s*(POSTGRES_PASSWORD|RABBITMQ_PASSWORD)=(.*)$') {
+        $valoresEnv[$Matches[1]] = $Matches[2].TrimEnd("`r").Trim()
+    }
+}
+foreach ($v in @('POSTGRES_PASSWORD', 'RABBITMQ_PASSWORD')) {
+    if (-not $valoresEnv[$v]) { Stop-ConError "$v no tiene valor en .env (plantilla: .env.example)." }
+}
+$env:DB_PASSWORD       = $valoresEnv['POSTGRES_PASSWORD']
+$env:RABBITMQ_PASSWORD = $valoresEnv['RABBITMQ_PASSWORD']
+Write-Host "  .env leido (POSTGRES_PASSWORD y RABBITMQ_PASSWORD con valor; no se muestran)."
+
+# Los contenedores de los microservicios (modo AWS) no se detienen desde aqui: se pide hacerlo a mano.
+$appEnMarcha = @($contenedoresApp | Where-Object { (docker inspect --format '{{.State.Running}}' $_ 2>$null) -eq 'true' })
+if ($appEnMarcha.Count -gt 0) {
+    Stop-ConError ("Hay contenedores de microservicios en marcha (modo AWS): " + ($appEnMarcha -join ', ') +
+                   ". Detenlos (no borra datos) con: docker compose stop " + ($appEnMarcha -join ' '))
+}
+
 # Si 8080 u 8081 ya estan ocupados (por ejemplo, una ejecucion desde IntelliJ) se aborta ya.
 foreach ($puerto in $puertos.Values) {
     if (Get-NetTCPConnection -LocalPort $puerto -State Listen -ErrorAction SilentlyContinue) {
@@ -138,7 +179,17 @@ function Test-InfraSana {
             Write-Host "  $c -> $(if ($estado) { $estado } else { 'no existe o no esta corriendo' })"
             return $false
         }
-        Write-Host "  $c -> healthy"
+        # Sano no basta: en modo AWS el contenedor esta sano pero su puerto no llega al host.
+        $puerto = $puertosInfra[$c]
+        $cliente = New-Object System.Net.Sockets.TcpClient
+        try   { $abierto = $cliente.ConnectAsync('127.0.0.1', $puerto).Wait(2000) -and $cliente.Connected }
+        catch { $abierto = $false }
+        finally { $cliente.Dispose() }
+        if (-not $abierto) {
+            Write-Host "  $c -> healthy, pero 127.0.0.1:$puerto no responde (arrancado sin docker-compose.dev.yml)"
+            return $false
+        }
+        Write-Host "  $c -> healthy (127.0.0.1:$puerto)"
     }
     return $true
 }
@@ -148,10 +199,13 @@ docker info *> $null
 if ($LASTEXITCODE -ne 0) { Stop-ConError "Docker no responde. Abre Docker Desktop y vuelve a intentarlo." }
 
 if (-not (Test-InfraSana)) {
-    Write-Host "Levantando la infraestructura con docker compose (puede tardar un par de minutos)..."
-    # --wait no devuelve el control hasta que los healthchecks pasan.
-    docker compose -f $compose up -d --wait
-    if ($LASTEXITCODE -ne 0) { Stop-ConError "docker compose up fallo. Revisa: docker compose -f `"$compose`" logs" }
+    Write-Host "Levantando la infraestructura (modo desarrollo) con docker compose (puede tardar un par de minutos)..."
+    Write-Host "  Si estaba arrancada en modo AWS, compose recrea esos tres contenedores para publicar los puertos:"
+    Write-Host "  PostgreSQL conserva sus datos (volumen); topics y colas los recrean los servicios al arrancar."
+    # Solo los tres servicios de infraestructura. --wait no devuelve el control hasta que los
+    # healthchecks pasan. docker compose lee .env de la raiz del proyecto.
+    docker compose -f $compose -f $composeDev up -d --wait @contenedores
+    if ($LASTEXITCODE -ne 0) { Stop-ConError "docker compose up fallo. Revisa: docker compose -f `"$compose`" -f `"$composeDev`" logs" }
     if (-not (Test-InfraSana)) { Stop-ConError "La infraestructura sigue sin estar sana." }
 }
 
@@ -268,6 +322,6 @@ Write-Host "PIDs en $archivoPids  |  logs en $carpetaLogs"
 Write-Host ""
 Write-Host "  Dashboard ............ http://localhost:8081"
 Write-Host "  API de ordenes ....... http://localhost:8080/order   (POST; prueba con ops\enviar-ordenes.ps1)"
-Write-Host "  RabbitMQ (consola) ... http://localhost:15672        usuario ecommerce / clave ecommerce"
+Write-Host "  RabbitMQ (consola) ... http://localhost:15672        usuario ecommerce / clave: RABBITMQ_PASSWORD de .env"
 Write-Host ""
-Write-Host "Para detener: ops\detener.ps1   (con -ConInfra apaga tambien los contenedores)"
+Write-Host "Para detener: ops\detener.ps1   (con -ConInfra detiene tambien postgres-db, kafka y rabbitmq)"

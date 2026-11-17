@@ -2,13 +2,28 @@
 
 ## 0. Infraestructura
 
+Modo **desarrollo local**: la infraestructura corre en Docker y los siete servicios como jar
+(IntelliJ o `ops\arrancar.ps1`). Se usa la capa `docker-compose.dev.yml`, que publica PostgreSQL
+(`5433`), Kafka (`29092`) y AMQP (`5672`) **solo en 127.0.0.1**; `docker-compose.yml` solo no
+los publica (es la configuración de AWS).
+
 ```powershell
 cd C:\Projects\Ecommerce-Hibrido
-docker compose up -d --wait     # levanta postgres-db, kafka y rabbitmq y espera a que estén sanos
-docker compose ps               # los tres deben decir (healthy)
+Copy-Item .env.example .env       # solo la primera vez; rellena POSTGRES_PASSWORD y RABBITMQ_PASSWORD
+# Si los contenedores de los microservicios (modo AWS) están en marcha, detenlos antes (no borra datos):
+docker compose stop order-api order-processor billing-worker inventory-worker notification-worker dashboard-aggregator analytics-service
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait postgres-db kafka rabbitmq
+docker compose -f docker-compose.yml -f docker-compose.dev.yml ps    # los tres deben decir (healthy)
 ```
 
-En IntelliJ: *Maven → Reload* (hay 5 módulos nuevos) y **JDK 21** en las configuraciones de ejecución.
+Si la infraestructura estaba arrancada en modo AWS, compose recrea esos tres contenedores para
+publicar los puertos: PostgreSQL conserva sus datos (volumen) y los topics y las colas los
+vuelven a crear los servicios al arrancar.
+
+En IntelliJ: *Maven → Reload* y **JDK 21** en las configuraciones de ejecución. Los servicios ya no
+tienen contraseña por defecto: en cada configuración de ejecución define las variables de entorno
+`DB_PASSWORD` (order-api, mismo valor que `POSTGRES_PASSWORD` del `.env`) y `RABBITMQ_PASSWORD`
+(order-processor y los tres workers). `ops\arrancar.ps1` lo hace solo a partir del `.env`.
 
 ## 1. Orden de arranque de los siete servicios
 
@@ -30,7 +45,7 @@ En IntelliJ: *Maven → Reload* (hay 5 módulos nuevos) y **JDK 21** en las conf
 
 | Qué | URL | Credenciales |
 |---|---|---|
-| Administración de RabbitMQ | http://localhost:15672 | usuario `ecommerce`, contraseña `ecommerce` |
+| Administración de RabbitMQ | http://localhost:15672 | usuario `ecommerce`, contraseña: `RABBITMQ_PASSWORD` del `.env` |
 | Dashboard de órdenes | http://localhost:8081 | — |
 
 En RabbitMQ, comprueba:
@@ -95,5 +110,8 @@ procesar:
 ## 7. Apagar
 
 ```powershell
-docker compose down        # detiene los contenedores y conserva los datos
+# Detiene los servicios de IntelliJ/arrancar.ps1 y después la infraestructura, sin eliminar nada
+powershell -ExecutionPolicy Bypass -File ops\detener.ps1 -ConInfra
+# equivalente manual de la segunda parte:
+docker compose -f docker-compose.yml -f docker-compose.dev.yml stop postgres-db kafka rabbitmq
 ```

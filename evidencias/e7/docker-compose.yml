@@ -1,3 +1,6 @@
+# NOTA (2026-11-17): las contrasenas que este archivo tenia escritas se sustituyeron por
+# variables de .env, que es como funciona hoy docker-compose.yml. Las credenciales originales
+# ya se rotaron y no son validas. El resto del archivo se conserva tal como era en la etapa 7.
 # Etapa 7: sistema completo en contenedores. Diez servicios en la red ecommerce-net:
 #   infraestructura (3): postgres-db, kafka, rabbitmq
 #   microservicios  (7): order-api, order-processor, billing-worker, inventory-worker,
@@ -39,7 +42,7 @@ x-rabbit: &rabbit-env
   SPRING_RABBITMQ_HOST: rabbitmq
   SPRING_RABBITMQ_PORT: 5672
   SPRING_RABBITMQ_USERNAME: ecommerce
-  SPRING_RABBITMQ_PASSWORD: ecommerce
+  SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
 
 services:
 
@@ -53,7 +56,7 @@ services:
     environment:
       POSTGRES_DB: ecommerce
       POSTGRES_USER: ecommerce
-      POSTGRES_PASSWORD: ecommerce
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       # 5433 en el host: en Windows hay un PostgreSQL 18 nativo (servicio postgresql-x64-18) ocupando
       # el 5432. Dentro de la red Docker se sigue usando postgres-db:5432.
@@ -120,7 +123,7 @@ services:
     container_name: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ecommerce
-      RABBITMQ_DEFAULT_PASS: ecommerce
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -214,7 +217,7 @@ services:
       <<: *kafka-env
       DB_URL: jdbc:postgresql://postgres-db:5432/ecommerce
       DB_USER: ecommerce
-      DB_PASSWORD: ecommerce
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       CORS_ORIGINS: "*"
       # user.language=es: la imagen Alpine arranca la JVM en ingles y los mensajes de validacion
       # de los 400 ("debe ser mayor que o igual a 1") saldrian en ingles.

@@ -1,7 +1,8 @@
 # Inventario de microservicios
 
 Valores tomados del código (`application.yml`, `@KafkaListener`, `@RabbitListener`, `ConfiguracionKafka`, `ConfiguracionRabbit`).
-Infraestructura (docker-compose): Kafka en `localhost:29092` desde el host (`kafka:9092` dentro de la red Docker), RabbitMQ en `5672` (consola web en `15672`), PostgreSQL en `localhost:5433` desde el host (`postgres-db:5432` dentro de la red Docker; el 5432 del host lo ocupa un PostgreSQL nativo de Windows).
+Infraestructura (`docker-compose.yml`, configuración AWS actual): Kafka (`kafka:9092`), RabbitMQ (`rabbitmq:5672`) y PostgreSQL (`postgres-db:5432`) solo son accesibles dentro de la red Docker `ecommerce-net`; al host se publican únicamente 8080, 8081 y la consola de RabbitMQ en `127.0.0.1:15672`. Ver `docs/despliegue-aws.md`.
+En la etapa 7 (commit `a0b8dbb`) también se publicaban Kafka en `localhost:29092`, AMQP en `5672` y PostgreSQL en `localhost:5433` (el 5432 del host lo ocupa un PostgreSQL nativo de Windows); los valores por defecto de los `application.yml` siguen apuntando a esas direcciones del host, que en desarrollo local publica `docker-compose.dev.yml` (solo en 127.0.0.1).
 
 | Módulo | Clase principal | Puerto | group-id de Kafka | Topics que consume | Topics que publica | Cola de RabbitMQ | Jar generado |
 |---|---|---|---|---|---|---|---|
@@ -19,19 +20,19 @@ Infraestructura (docker-compose): Kafka en `localhost:29092` desde el host (`kaf
 - **Topología de RabbitMQ:** `order_tasks` es un exchange *fanout*, así que cada comando `ProcesarOrden` se copia a las tres colas. Cada cola tiene como dead-letter exchange a `order_tasks_dlx` (también fanout), enlazado a la cola `failed_tasks`. Un mensaje llega ahí cuando fallan sus 3 intentos. Cada worker declara su propia cola, el exchange, el DLX y `failed_tasks`. Declararlos de nuevo con los mismos parámetros no cambia nada, así que el orden de arranque no importa.
 - **Workers:** `prefetch: 1` y `concurrency: 2` hilos por instancia.
 - **Consumidores de `new_orders`:** 3 hilos, uno por partición.
-- **Variables de entorno con valor por defecto:** `KAFKA_BOOTSTRAP` (localhost:29092), `RABBITMQ_HOST/PORT/USER/PASSWORD` (localhost/5672/ecommerce/ecommerce; en Docker se usan `SPRING_RABBITMQ_*`, que Spring enlaza por *relaxed binding* y tienen prioridad sobre el `application.yml`), `DB_URL` (order-api; si no se define se arma con `DB_HOST/PORT/NAME`), `DB_USER/PASSWORD`, `CORS_ORIGINS` (order-api, `*`), `SERVER_PORT` (dashboard), `ARCHIVO_ORDENES` (analytics-service, `./datos/ordenes.log`; en Docker `/app/datos/ordenes.log`).
+- **Variables de entorno con valor por defecto:** `KAFKA_BOOTSTRAP` (localhost:29092), `RABBITMQ_HOST/PORT/USER/PASSWORD` (localhost/5672/usuario `ecommerce`; en Docker se usan `SPRING_RABBITMQ_*`, que Spring enlaza por *relaxed binding* y tienen prioridad sobre el `application.yml`), `DB_URL` (order-api; si no se define se arma con `DB_HOST/PORT/NAME`), `DB_USER/PASSWORD`, `CORS_ORIGINS` (order-api, `*`), `SERVER_PORT` (dashboard), `ARCHIVO_ORDENES` (analytics-service, `./datos/ordenes.log`; en Docker `/app/datos/ordenes.log`). En Docker las contraseñas llegan desde `.env` (`POSTGRES_PASSWORD`, `RABBITMQ_PASSWORD`; plantilla en `.env.example`); los `application.yml` no tienen contraseña por defecto: en desarrollo local se pasan `DB_PASSWORD` y `RABBITMQ_PASSWORD` (`ops\arrancar.ps1` las toma del `.env`).
 - **Perfil `sin-kafka` (order-api):** sustituye el publicador de Kafka por uno que solo escribe en el log.
 
 ## Orden de arranque
 
-Kafka tiene `KAFKA_AUTO_CREATE_TOPICS_ENABLE=false`: cada topic lo crea solo su productor, así que nadie puede crear `new_orders` con una sola partición por accidente. En `docker-compose.yml` el orden lo imponen los `depends_on`:
+Kafka tiene `KAFKA_AUTO_CREATE_TOPICS_ENABLE=false`: cada topic lo crea solo su productor, así que nadie puede crear `new_orders` con una sola partición por accidente. Con un `docker compose up` directo, el orden lo imponen los `depends_on` de `docker-compose.yml` (en AWS se usa `ops/aws/arrancar-aws.sh`, que arranca por tandas y deja order-processor al final; ver `docs/despliegue-aws.md` §10):
 
 1. postgres-db, kafka y rabbitmq (healthcheck: `pg_isready`, `kafka-topics.sh --list`, `rabbitmq-diagnostics -q ping`).
 2. Workers (billing, inventory, notification) y dashboard-aggregator. Los workers declaran sus colas y crean sus topics de resultados. El dashboard refresca metadatos cada 10 s (`metadata.max.age.ms`), por lo que detecta esos topics aunque arranque antes que los workers.
 3. order-api, cuando PostgreSQL y Kafka están sanos. Crea `new_orders` con 3 particiones y queda sano cuando su puerto 8080 responde.
 4. order-processor y analytics-service, solo cuando order-api está sano, con `new_orders` ya creado. Leen desde `earliest`, así que una orden enviada mientras todavía arrancan no se pierde.
 
-Desde jar en Windows, `opsrrancar.ps1` sigue el mismo orden en tres tandas.
+Desde jar en Windows, `ops\arrancar.ps1` sigue el mismo orden en tres tandas.
 
 ## Etapa 7: contenedores
 

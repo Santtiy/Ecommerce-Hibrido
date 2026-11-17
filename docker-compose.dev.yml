@@ -1,0 +1,48 @@
+#file: noinspection ComposeUnknownValues
+# =============================================================================================
+# docker-compose.dev.yml - capa para DESARROLLO LOCAL en Windows (IntelliJ / ops\arrancar.ps1).
+#
+# NO se carga sola: solo se aplica si se pasa explicitamente con -f, encima de docker-compose.yml.
+# Por eso NO se llama docker-compose.override.yml (ese nombre lo cargaria compose automaticamente
+# y cambiaria el despliegue de AWS). En EC2 este archivo no se usa.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml config --quiet
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait postgres-db kafka rabbitmq
+#   (o simplemente: powershell -ExecutionPolicy Bypass -File ops\arrancar.ps1)
+#
+# Que cambia respecto a docker-compose.yml (y nada mas):
+#   1. Publica los puertos de infraestructura SOLO en 127.0.0.1, en las direcciones que usan por
+#      defecto los application.yml (localhost:5433, localhost:29092, localhost:5672).
+#   2. Pone los siete microservicios en el perfil "contenedores": en este modo corren como jar
+#      (IntelliJ o arrancar.ps1), y un "up" sin nombres de servicio no los arranca ni ocupa los
+#      puertos 8080/8081. Para arrancarlos igualmente en contenedor: --profile contenedores.
+# Limites de CPU/RAM, healthchecks, volumenes, red, imagenes y credenciales (.env) son los mismos.
+#
+# Al pasar de un modo a otro, compose RECREA postgres-db, kafka y rabbitmq (cambian sus puertos).
+# Los datos de PostgreSQL se conservan (volumen postgres-data); los topics de Kafka y las colas de
+# RabbitMQ viven en el contenedor y los vuelven a crear los propios servicios al arrancar.
+# =============================================================================================
+
+services:
+
+  postgres-db:
+    ports:
+      - "127.0.0.1:5433:5432"      # order-api: DB_PORT por defecto 5433 (el 5432 lo usa un PostgreSQL nativo)
+
+  kafka:
+    ports:
+      # Listener EXTERNAL ya definido en docker-compose.yml (anunciado como localhost:29092).
+      - "127.0.0.1:29092:29092"
+
+  rabbitmq:
+    ports:
+      # Se suma al 127.0.0.1:15672 de docker-compose.yml (compose fusiona las listas de puertos).
+      - "127.0.0.1:5672:5672"
+
+  order-api:            { profiles: ["contenedores"] }
+  order-processor:      { profiles: ["contenedores"] }
+  billing-worker:       { profiles: ["contenedores"] }
+  inventory-worker:     { profiles: ["contenedores"] }
+  notification-worker:  { profiles: ["contenedores"] }
+  dashboard-aggregator: { profiles: ["contenedores"] }
+  analytics-service:    { profiles: ["contenedores"] }

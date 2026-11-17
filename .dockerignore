@@ -11,5 +11,26 @@ evidencias/
 docs/
 ops/pids.txt
 *.log
+# Credenciales locales: nunca en el contexto de construccion (la etapa builder hace COPY . .).
+# Se excluye tambien .env.example: no lo necesita ninguna imagen.
+.env
+.env.*
+**/.env
+**/.env.*
+# Claves, respaldos y documentos de entrega: nunca en el contexto de construccion.
+*.pem
+*.key
+*.ppk
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*.dump
+*.tar
+*.tar.gz
+*.backup-pre-sync
+Claude outputs/
+README.md
+docker-compose*.yml
 Dockerfile
 .dockerignore

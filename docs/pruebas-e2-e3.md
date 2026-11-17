@@ -1,7 +1,9 @@
 # Pruebas manuales — Etapas 2 y 3
 
-Requisitos: `docker compose up -d --wait` ejecutado en la raíz, y order-api y analytics-service
-arrancados. Los mismos casos están en `order-api/src/test/http/order.http` para IntelliJ.
+Requisitos: infraestructura en modo desarrollo
+(`docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait postgres-db kafka rabbitmq`,
+ver `docs/pruebas-e4-e6.md` §0), y order-api y analytics-service arrancados. Los mismos casos
+están en `order-api/src/test/http/order.http` para IntelliJ.
 
 ## 1. Peticiones desde PowerShell
 

@@ -13,7 +13,8 @@ spring:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:ecommerce}
-    password: ${RABBITMQ_PASSWORD:ecommerce}
+    # Sin valor por defecto en el codigo: llega por variable de entorno (.env en local, docker-compose.yml en Docker).
+    password: ${RABBITMQ_PASSWORD:}
     listener:
       simple:
         # prefetch 1: RabbitMQ no le adelanta a un consumidor un segundo mensaje hasta que confirme

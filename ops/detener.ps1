@@ -10,9 +10,11 @@
 
     Uso:
         powershell -ExecutionPolicy Bypass -File ops\detener.ps1              # solo los servicios
-        powershell -ExecutionPolicy Bypass -File ops\detener.ps1 -ConInfra    # y ademas docker compose down
+        powershell -ExecutionPolicy Bypass -File ops\detener.ps1 -ConInfra    # y ademas detiene la infraestructura
 
-    docker compose down NO borra el volumen de PostgreSQL: las ordenes guardadas se conservan.
+    -ConInfra hace "docker compose stop postgres-db kafka rabbitmq" (con docker-compose.dev.yml): detiene
+    los contenedores SIN eliminarlos, asi que se conservan las ordenes de PostgreSQL y tambien los topics
+    de Kafka y las colas de RabbitMQ. No toca los contenedores de los microservicios (modo AWS).
 #>
 
 # -ConInfra es un interruptor: si se escribe, vale $true; si no, $false.
@@ -23,6 +25,7 @@ param(
 $raiz        = Split-Path -Parent $PSScriptRoot
 $archivoPids = Join-Path $PSScriptRoot 'pids.txt'
 $compose     = Join-Path $raiz 'docker-compose.yml'
+$composeDev  = Join-Path $raiz 'docker-compose.dev.yml'
 
 # ---------------------------------------------------------------------------------------------
 # Cierra un PID solo si existe y su nombre de proceso es el esperado. Devuelve un texto con lo ocurrido.
@@ -73,10 +76,20 @@ if (-not (Test-Path $archivoPids)) {
 # ---------------------------------------------------------------------------------------------
 
 if ($ConInfra) {
-    Write-Host "== docker compose down" -ForegroundColor Cyan
-    docker compose -f $compose down
+    Write-Host "== docker compose stop postgres-db kafka rabbitmq" -ForegroundColor Cyan
+    # compose exige POSTGRES_PASSWORD y RABBITMQ_PASSWORD para cargar el modelo incluso para "stop".
+    # Sin .env se usan valores de relleno SOLO en este proceso: "stop" nunca crea ni recrea un
+    # contenedor, asi que esos valores no llegan a ningun servicio (igual que ops/aws/detener-aws.sh).
+    if (-not (Test-Path (Join-Path $raiz '.env'))) {
+        foreach ($v in @('POSTGRES_PASSWORD', 'RABBITMQ_PASSWORD')) {
+            if (-not [Environment]::GetEnvironmentVariable($v, 'Process')) {
+                [Environment]::SetEnvironmentVariable($v, 'no-usada-al-detener', 'Process')
+            }
+        }
+    }
+    docker compose -f $compose -f $composeDev stop postgres-db kafka rabbitmq
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "docker compose down devolvio un error (codigo $LASTEXITCODE)." -ForegroundColor Red
+        Write-Host "docker compose stop devolvio un error (codigo $LASTEXITCODE)." -ForegroundColor Red
         exit 1
     }
 }
