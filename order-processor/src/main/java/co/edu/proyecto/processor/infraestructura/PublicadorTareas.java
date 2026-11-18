@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class PublicadorTareas {
 
-    /** order_tasks es FANOUT: copia el mensaje a todas las colas enlazadas e ignora la routing key. */
     private static final String ROUTING_KEY_IGNORADA = "";
 
     private final RabbitTemplate rabbitTemplate;

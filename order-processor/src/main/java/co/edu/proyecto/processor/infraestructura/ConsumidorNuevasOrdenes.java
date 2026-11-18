@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/** Puente Kafka → RabbitMQ: recibe el evento OrdenCreada y despacha el comando ProcesarOrden. */
+/** Puente Kafka → RabbitMQ. */
 @Component
 public class ConsumidorNuevasOrdenes {
 
@@ -22,9 +22,6 @@ public class ConsumidorNuevasOrdenes {
         this.publicador = publicador;
     }
 
-    // ADVERTENCIA: este group-id tiene que ser DISTINTO al de analytics-service ("analytics-group").
-    // Si coincidieran, Kafka los trataría como dos instancias del mismo consumidor y entregaría cada
-    // evento a uno solo de los dos, procesando la mitad de las órdenes sin lanzar ninguna excepción.
     @KafkaListener(topics = "new_orders", groupId = "processor-group")
     public void consumir(OrdenCreada evento) {
         ProcesarOrden comando = traductor.traducir(evento);

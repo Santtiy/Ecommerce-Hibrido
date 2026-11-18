@@ -1,6 +1,6 @@
 package co.edu.proyecto.orden.dominio;
 
-/** IVA general de Colombia: suma el 19 % sobre la base. */
+/** IVA general de Colombia. */
 public class IvaColombia implements EstrategiaImpuesto {
 
     private static final int TARIFA = 19;

@@ -13,21 +13,12 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
-/**
- * Consumidor de Kafka de order-processor (mismo esquema que analytics-service).
- *
- * <p>ADVERTENCIA sobre grupos de consumidores: este servicio usa "processor-group" y
- * analytics-service usa "analytics-group". Deben ser DISTINTOS: si coincidieran, Kafka los
- * trataría como dos instancias del mismo consumidor y entregaría cada evento a uno solo de los
- * dos, procesando la mitad de las órdenes sin lanzar ninguna excepción.
- */
+/** Consumidor de Kafka de order-processor (mismo esquema que analytics-service). */
 @Configuration
 public class ConfiguracionKafka {
 
-    /** Un hilo por partición del topic new_orders (3). */
     private static final int HILOS_CONSUMIDOR = 3;
 
-    /** ObjectMapper de Spring (java.time) y sin cabeceras de tipo; mensajes corruptos se saltan. */
     @Bean
     public ConsumerFactory<String, OrdenCreada> consumerFactory(KafkaProperties propiedades,
                                                                SslBundles sslBundles,
@@ -39,7 +30,6 @@ public class ConfiguracionKafka {
                         new JsonDeserializer<>(OrdenCreada.class, objectMapper, false)));
     }
 
-    /** Declarada a mano: la autoconfigurada espera un ConsumerFactory&lt;Object, Object&gt;. */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, OrdenCreada> kafkaListenerContainerFactory(
             ConsumerFactory<String, OrdenCreada> consumerFactory) {

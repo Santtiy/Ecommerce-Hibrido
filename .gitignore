@@ -1,26 +1,20 @@
-# Salida de Maven
+# Salida de Maven.
 target/
 
-# IntelliJ IDEA
 .idea/
 *.iml
 
-# Datos generados en ejecución (analytics-service: ./datos/ordenes.log)
 datos/
 
-# Logs
 *.log
 logs/
 
-# PIDs de los servicios lanzados por ops/arrancar.ps1
 ops/pids.txt
 
-# Credenciales locales
 .env
 .env.*
 !.env.example
 
-# Claves y certificados (p. ej. la clave .pem de EC2): nunca dentro del repositorio
 *.pem
 *.key
 *.ppk
@@ -29,19 +23,15 @@ ops/pids.txt
 id_rsa*
 id_ed25519*
 
-# Exportacion de imagenes Docker (ops/aws/exportar-imagenes.ps1 las deja fuera del repo por defecto)
 *.tar
 *.tar.gz
 *.tar.gz.sha256
 
-# Copias de seguridad de sincronizacion con EC2
 *.backup-pre-sync
 
-# Respaldos de base de datos y copias de .env (p. ej. *-backup-pre-rotacion.dump, .env.backup-*)
 *.dump
 *.backup
 *-backup-*
 *.bak
 
-# Documentos generados para la entrega (no forman parte del codigo)
 Claude outputs/

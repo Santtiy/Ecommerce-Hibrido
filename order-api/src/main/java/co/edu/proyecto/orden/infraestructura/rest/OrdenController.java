@@ -19,10 +19,6 @@ public class OrdenController {
         this.ordenService = ordenService;
     }
 
-    /**
-     * 202 ACCEPTED y no 201 CREATED: la orden fue aceptada y guardada, pero su procesamiento
-     * asíncrono (eventos, pago, inventario) todavía no ha terminado.
-     */
     @PostMapping("/order")
     public ResponseEntity<RespuestaOrden> crear(@Valid @RequestBody CrearOrdenRequest solicitud) {
         Orden orden = ordenService.registrar(solicitud);

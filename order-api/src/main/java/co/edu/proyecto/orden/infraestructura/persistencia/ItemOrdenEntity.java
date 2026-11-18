@@ -11,11 +11,7 @@ import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 
-/**
- * Modelo de PERSISTENCIA de la tabla "items_orden", no modelo de dominio.
- * Constructor vacío y setters existen solo porque JPA los exige; las reglas del ítem
- * viven en el record {@code dominio.ItemOrden}.
- */
+/** Modelo de PERSISTENCIA de la tabla "items_orden", no modelo de dominio. */
 @Entity
 @Table(name = "items_orden")
 public class ItemOrdenEntity {

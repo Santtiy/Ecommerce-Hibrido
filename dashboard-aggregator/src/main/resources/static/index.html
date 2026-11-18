@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ecommerce Híbrido · Dashboard</title>
   <style>
-    /* Sin librerías ni CDN: la página debe funcionar sin internet dentro de un contenedor. */
     :root {
       --fondo: #f3f4f6; --tarjeta: #ffffff; --texto: #111827; --suave: #4b5563; --borde: #d1d5db;
       --acento: #1d4ed8; --acento-texto: #ffffff;
@@ -88,8 +87,6 @@
     .estado.fallo { background: var(--fallo-fondo); color: var(--fallo-texto); }
     .estado.pendiente { background: var(--pend-fondo); color: var(--pend-texto); }
 
-    /* Destacado de la fila actualizada (RF-12): el fondo se pone amarillo al instante y vuelve
-       al normal con una transición suave, para que se vea qué fila acaba de cambiar. */
     #ordenes tbody td { transition: background-color 1.8s ease-out; }
     #ordenes tbody tr.destacada td { background-color: var(--destacado); transition: none; }
   </style>
@@ -103,7 +100,6 @@
     </div>
   </header>
 
-  <!-- ───────────── Ejemplos rápidos para la demostración ───────────── -->
   <section class="tarjeta">
     <h2>Ejemplos rápidos</h2>
     <div class="ejemplos">
@@ -115,7 +111,6 @@
     </div>
   </section>
 
-  <!-- ───────────── Formulario de nueva orden ───────────── -->
   <section class="tarjeta">
     <h2>Nueva orden</h2>
     <form id="formulario" novalidate>
@@ -132,8 +127,6 @@
         <button type="button" id="anadir-fila">+ Añadir ítem</button>
       </div>
 
-      <!-- Cálculo SOLO informativo para el usuario: el total autoritativo lo calcula siempre el
-           dominio en el servidor (Orden.calcularTotal) y este valor nunca se envía al backend. -->
       <dl class="totales">
         <dt>Subtotal</dt><dd id="subtotal">$ 0</dd>
         <dt>Descuento aplicado (10 % si supera 100.000)</dt><dd id="descuento">$ 0</dd>
@@ -147,13 +140,11 @@
     </form>
   </section>
 
-  <!-- ───────────── Respuesta de la petición ───────────── -->
   <section id="respuesta" class="tarjeta" aria-live="polite">
     <h2>Respuesta de order-api</h2>
     <div id="respuesta-contenido" class="vacio">Aún no se ha enviado ninguna orden.</div>
   </section>
 
-  <!-- ───────────── Órdenes en vivo (WebSocket) ───────────── -->
   <section class="tarjeta">
     <div class="cabecera-tabla">
       <h2>Órdenes en vivo</h2>
@@ -169,8 +160,6 @@
 </main>
 
 <script>
-  // Las direcciones se construyen con el host desde el que se sirve la página, nunca con un
-  // nombre fijo: así funciona igual en el portátil que en la máquina virtual (IP de la VM).
   const HOST = window.location.hostname;
   const API  = `http://${HOST}:8080/order`;
   const WS   = `ws://${HOST}:8081/ws/ordenes`;
@@ -178,8 +167,6 @@
 
   const formatoPesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 2 });
   const $ = (id) => document.getElementById(id);
-
-  // ════════════════════════ Formulario ════════════════════════
 
   const cuerpoItems = document.querySelector('#items tbody');
 
@@ -214,14 +201,12 @@
     recalcular();
   }
 
-  /** Convierte un campo numérico en número, o null si está vacío o no es válido. */
   function numero(texto) {
     if (texto.trim() === '') return null;
     const n = Number(texto);
     return Number.isFinite(n) ? n : null;
   }
 
-  /** Lee el formulario tal como lo escribió el usuario. Sin validar: eso lo hace el servidor. */
   function leerOrden() {
     const items = [...cuerpoItems.rows].map((fila) => ({
       sku: fila.querySelector('.sku').value.trim(),
@@ -232,10 +217,6 @@
     return { cliente: $('cliente').value.trim(), items };
   }
 
-  // AVISO: este cálculo es solo informativo para el usuario. Replica las reglas del dominio
-  // (suma de subtotales; 10 % de descuento si supera 100.000 (RN-14); luego 19 % de IVA), pero el
-  // total autoritativo lo calcula SIEMPRE el dominio en el servidor y este valor NUNCA se envía.
-  // Se trabaja en centavos enteros para redondear a 2 decimales como Dinero (HALF_UP).
   function recalcular() {
     const centavos = (pesos) => Math.round(pesos * 100);
     const subtotal = leerOrden().items.reduce(
@@ -255,8 +236,6 @@
     recalcular();
   }
 
-  // ════════════════════════ Ejemplos rápidos ════════════════════════
-
   const EJEMPLOS = {
     'normal':        { enviar: false, items: [{ sku: 'LIB-001', nombre: 'Libro', cantidad: 1, precioUnitario: 150000 }] },
     'pago':          { enviar: false, items: [{ sku: 'TV-001', nombre: 'Televisor', cantidad: 1, precioUnitario: 1500000 }] },
@@ -273,8 +252,6 @@
     });
   });
 
-  // ════════════════════════ Envío a order-api ════════════════════════
-
   function mostrarRespuesta(tipo, nodos) {
     $('respuesta').className = 'tarjeta ' + tipo;
     $('respuesta-contenido').className = '';
@@ -285,7 +262,7 @@
     const p = document.createElement('p');
     p.style.margin = '6px 0';
     if (clase) p.className = clase;
-    p.textContent = texto;   // textContent: lo que devuelve el servidor nunca se interpreta como HTML
+    p.textContent = texto;
     return p;
   }
 
@@ -311,7 +288,7 @@
         body: JSON.stringify(orden),
       });
       let cuerpo = null;
-      try { cuerpo = await respuesta.json(); } catch { /* respuesta sin JSON */ }
+      try { cuerpo = await respuesta.json(); } catch { }
 
       const nodos = [parrafo('HTTP ' + respuesta.status, 'codigo')];
       if (respuesta.status === 202 && cuerpo) {
@@ -319,7 +296,6 @@
         nodos.push(parrafo('Total calculado por el servidor: ' + formatoPesos.format(cuerpo.total) + ' ' + (cuerpo.moneda ?? '')));
         nodos.push(parrafo('Estado: ' + cuerpo.estado + '. Siga su avance en la tabla de órdenes en vivo.'));
       } else if (cuerpo) {
-        // Formato de ManejadorExcepciones: {codigo, mensaje, detalles[], momento}
         nodos.push(parrafo(cuerpo.mensaje ?? 'Error'));
         if (Array.isArray(cuerpo.detalles) && cuerpo.detalles.length > 0) {
           const lista = document.createElement('ul');
@@ -335,7 +311,6 @@
       if (cuerpo) nodos.push(bloqueJson('Cuerpo recibido', cuerpo));
       mostrarRespuesta(respuesta.ok ? 'ok' : 'fallo', nodos);
     } catch (error) {
-      // fetch solo lanza si no hubo respuesta HTTP: servidor caído, puerto cerrado o CORS rechazado.
       mostrarRespuesta('fallo', [
         parrafo('Sin respuesta', 'codigo'),
         parrafo('No se pudo conectar con order-api en ' + API + '. Es posible que order-api no esté arrancado (ops\\arrancar.ps1).'),
@@ -348,8 +323,6 @@
 
   $('formulario').addEventListener('submit', (evento) => { evento.preventDefault(); enviarOrden(); });
   $('anadir-fila').addEventListener('click', () => anadirFila());
-
-  // ════════════════════════ Tabla en vivo (WebSocket) ════════════════════════
 
   const EXITOS = ['PAYMENT_SUCCESS', 'STOCK_RESERVED', 'EMAIL_SENT'];
   const FALLOS = ['PAYMENT_FAILED', 'STOCK_OUT_OF_STOCK'];
@@ -373,8 +346,6 @@
   }
 
   function destacar(fila) {
-    // Se pone el fondo destacado sin transición y, en el siguiente cuadro, se quita la clase:
-    // el fondo vuelve al normal con la transición definida en el CSS.
     fila.classList.add('destacada');
     void fila.offsetWidth;
     requestAnimationFrame(() => fila.classList.remove('destacada'));
@@ -393,11 +364,9 @@
       const celdaHora = document.createElement('td');
       celdaHora.className = 'hora';
       fila.append(celdaId, document.createElement('td'), document.createElement('td'), document.createElement('td'), celdaHora);
-      filas.prepend(fila);   // la orden más reciente arriba
+      filas.prepend(fila);
       $('contador').textContent = filas.rows.length;
     }
-    // Se evalúan los tres (sin cortocircuito) y solo se destaca si algo cambió de verdad;
-    // así la foto inicial que reenvía el servidor al reconectar no ilumina filas sin cambios.
     const cambios = [
       pintarEstado(fila.cells[1], estado.payment),
       pintarEstado(fila.cells[2], estado.stock),
@@ -419,18 +388,16 @@
     const ws = new WebSocket(WS);
     ws.onopen = () => mostrarConexion(true);
     ws.onmessage = (evento) => {
-      // {"<orderId>": {"payment": "...", "stock": "...", "email": "..."}} (una o varias claves)
       const datos = JSON.parse(evento.data);
       for (const [orderId, estado] of Object.entries(datos)) actualizarFila(orderId, estado);
     };
-    // onclose también se dispara cuando el intento de conexión falla: se reintenta cada 3 s.
     ws.onclose = () => {
       mostrarConexion(false);
       setTimeout(conectar, SEGUNDOS_REINTENTO * 1000);
     };
   }
 
-  anadirFila();   // el formulario empieza con una fila
+  anadirFila();
   conectar();
 </script>
 </body>

@@ -25,7 +25,6 @@ public class ConfiguracionKafka {
         return TopicBuilder.name(TOPIC).partitions(1).replicas(1).build();
     }
 
-    /** ObjectMapper de Spring para serializar el Instant de ResultadoTarea. */
     @Bean
     public ProducerFactory<String, ResultadoTarea> producerFactory(KafkaProperties propiedades,
                                                                   SslBundles sslBundles,

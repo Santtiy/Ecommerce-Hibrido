@@ -19,26 +19,20 @@ class ReglaInventarioTest {
 
     @Test
     void onceUnidadesDanStockOutOfStock() {
-        // Arrange
         ProcesarOrden comando = comandoPor(11);
 
-        // Act
         ResultadoTarea resultado = regla.evaluar(comando);
 
-        // Assert
         assertEquals("STOCK_OUT_OF_STOCK", resultado.status());
         assertEquals("orden-1", resultado.orderId());
     }
 
     @Test
     void diezUnidadesExactasDanStockReserved() {
-        // Arrange: límite exacto, la regla es "mayor que"
         ProcesarOrden comando = comandoPor(10);
 
-        // Act
         ResultadoTarea resultado = regla.evaluar(comando);
 
-        // Assert
         assertEquals("STOCK_RESERVED", resultado.status());
     }
 }

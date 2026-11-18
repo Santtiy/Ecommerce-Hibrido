@@ -5,10 +5,7 @@ import co.edu.proyecto.orden.dominio.excepciones.OrdenInvalidaException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Patrón Builder: acumula los datos y valida todo en {@link #construir()},
- * de modo que nunca exista una orden a medio construir.
- */
+/** Patrón Builder. */
 public class OrdenBuilder {
 
     private String cliente;
@@ -32,9 +29,8 @@ public class OrdenBuilder {
             throw new OrdenInvalidaException("El cliente de la orden es obligatorio");
         }
         if (items.isEmpty()) {
-            throw new OrdenInvalidaException("La orden debe tener al menos un ítem"); // RN-01
+            throw new OrdenInvalidaException("La orden debe tener al menos un ítem");
         }
-        // La identidad se genera aquí, antes de persistir: el dominio no depende de la BD.
         return new Orden(OrdenId.nuevo(), cliente, items);
     }
 }

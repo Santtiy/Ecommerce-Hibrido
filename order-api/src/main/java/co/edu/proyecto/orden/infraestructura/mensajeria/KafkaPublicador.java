@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-/** Adaptador: implementa el puerto {@link PublicadorEventos} publicando en Kafka. */
+/** Adaptador. */
 @Component
 @Profile("!sin-kafka")
 public class KafkaPublicador implements PublicadorEventos {
@@ -24,8 +24,6 @@ public class KafkaPublicador implements PublicadorEventos {
 
     @Override
     public void publicar(OrdenCreada evento) {
-        // El orderId va como CLAVE: Kafka elige la partición a partir de la clave, así que todos
-        // los eventos de una misma orden caen en la misma partición y conservan su orden relativo.
         kafkaTemplate.send(ConfiguracionKafka.TOPIC_NUEVAS_ORDENES, evento.orderId(), evento)
                 .whenComplete((resultado, error) -> {
                     if (error != null) {

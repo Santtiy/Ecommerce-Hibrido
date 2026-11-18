@@ -19,38 +19,29 @@ class ReglaPagoTest {
 
     @Test
     void unMontoDe1100000DaPaymentFailed() {
-        // Arrange
         ProcesarOrden comando = comandoPor("1100000");
 
-        // Act
         ResultadoTarea resultado = regla.evaluar(comando);
 
-        // Assert
         assertEquals("PAYMENT_FAILED", resultado.status());
         assertEquals("orden-1", resultado.orderId());
     }
 
     @Test
     void unMontoDe900000DaPaymentSuccess() {
-        // Arrange
         ProcesarOrden comando = comandoPor("900000");
 
-        // Act
         ResultadoTarea resultado = regla.evaluar(comando);
 
-        // Assert
         assertEquals("PAYMENT_SUCCESS", resultado.status());
     }
 
     @Test
     void unMontoDeExactamente1000000DaPaymentSuccess() {
-        // Arrange: límite exacto, la regla es "mayor que"
         ProcesarOrden comando = comandoPor("1000000.00");
 
-        // Act
         ResultadoTarea resultado = regla.evaluar(comando);
 
-        // Assert
         assertEquals("PAYMENT_SUCCESS", resultado.status());
     }
 }

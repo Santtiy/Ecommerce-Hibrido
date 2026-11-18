@@ -2,7 +2,7 @@ package co.edu.proyecto.orden.dominio;
 
 import co.edu.proyecto.orden.dominio.excepciones.OrdenInvalidaException;
 
-/** Value Object: una línea de la orden. Inmutable y validado al crearse. */
+/** Value Object. */
 public record ItemOrden(String sku, String nombre, int cantidad, Dinero precioUnitario) {
 
     public ItemOrden {
@@ -13,7 +13,7 @@ public record ItemOrden(String sku, String nombre, int cantidad, Dinero precioUn
             throw new OrdenInvalidaException("El nombre del ítem es obligatorio");
         }
         if (cantidad <= 0) {
-            throw new OrdenInvalidaException("La cantidad debe ser mayor que cero: " + cantidad); // RN-02
+            throw new OrdenInvalidaException("La cantidad debe ser mayor que cero: " + cantidad);
         }
         if (precioUnitario == null) {
             throw new OrdenInvalidaException("El precio unitario es obligatorio");

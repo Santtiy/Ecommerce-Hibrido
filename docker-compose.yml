@@ -1,54 +1,18 @@
 #file: noinspection ComposeUnknownValues
-# =============================================================================================
-# docker-compose.yml - archivo Compose PRINCIPAL y unico del proyecto. Configuracion optimizada
-# para AWS EC2 t3.small (2 GiB RAM, 2 vCPU burstable) con Ubuntu Server 24.04; verificada en EC2.
-#
-#   docker compose config --quiet                                # validar
-#   bash ops/aws/arrancar-aws.sh                                 # arranque por tandas (--no-build)
-#   bash ops/aws/detener-aws.sh                                  # stop, conserva volumenes y datos
-#
-# Sustituye a la configuracion de la etapa 7 (VM de 8 GB, limites 4368M, puertos de infraestructura
-# publicados), que se conserva en el historial de Git (commit a0b8dbb).
-#
-# MISMA ARQUITECTURA que la etapa 7: diez servicios, mismos nombres, mismos topics, particiones,
-# colas, exchanges, group-id, listeners de Kafka y depends_on. Lo que cambio (ver
-# docs/despliegue-aws.md, anexo "Diferencias con la configuracion de la etapa 7"):
-#   1. image: explicita en los siete microservicios (se cargan con docker load; se arranca --no-build).
-#   2. Solo se publican 8080, 8081 y 15672. PostgreSQL, Kafka y AMQP quedan en la red interna.
-#   3. Limites de memoria/CPU y JVM ajustados a 2 GiB.
-#   4. Spring Boot (Hikari, Tomcat), RabbitMQ (Erlang + watermark) y PostgreSQL ajustados por
-#      variables/argumentos, sin tocar ningun application.yml.
-#   5. Healthchecks tolerantes al arranque lento de T3 pero estrictos una vez arrancado.
-#   6. Rotacion de logs de Docker (el disco EBS es pequeno).
-#
-# CREDENCIALES: las contrasenas NO estan en este archivo. Se leen de .env (junto a este archivo,
-#   ignorado por Git; plantilla en .env.example): POSTGRES_PASSWORD y RABBITMQ_PASSWORD. Son
-#   obligatorias (${VAR:?...}): sin ellas compose se niega a arrancar en vez de usar una vacia.
-#   No uses "docker compose config" sin --quiet: imprime los valores resueltos.
-#
-# REGLA DE MEMORIA aplicada a cada JVM:  limite >= -Xmx + memoria fuera del heap
-#   (metaspace ~60-110 MB segun el modulo, code cache, pilas de hilos, GC, buffers nativos).
-#   Un limite por debajo de esa suma termina en OOM kill (exit 137) o en uso de swap.
-# =============================================================================================
+# docker-compose.yml - archivo Compose PRINCIPAL y unico del proyecto.
 
-# Nombre de proyecto fijo: los volumenes (ecommerce-hibrido_postgres-data) y las imagenes
-# (ecommerce-hibrido-<modulo>) no dependen del nombre de la carpeta donde este el proyecto.
 name: ecommerce-hibrido
 
-# Rotacion de logs: sin ella, json-file crece sin limite y puede llenar el volumen EBS.
 x-logging: &logging
   driver: json-file
   options:
     max-size: "10m"
     max-file: "3"
 
-# Bloques comunes de los siete microservicios (los campos x-* los ignora compose).
 x-microservicio: &microservicio
   build: &build
     context: .
     dockerfile: Dockerfile
-  # Las imagenes llegan por docker load. "never" impide que compose intente descargarlas de
-  # Docker Hub si faltan: falla con un error claro en lugar de buscar una imagen ajena.
   pull_policy: never
   restart: unless-stopped
   logging: *logging
@@ -56,33 +20,15 @@ x-microservicio: &microservicio
     - ecommerce-net
 
 x-kafka: &kafka-env
-  KAFKA_BOOTSTRAP: kafka:9092              # listener INTERNAL (igual que en la etapa 7)
+  KAFKA_BOOTSTRAP: kafka:9092
 
 x-rabbit: &rabbit-env
   SPRING_RABBITMQ_HOST: rabbitmq
   SPRING_RABBITMQ_PORT: 5672
   SPRING_RABBITMQ_USERNAME: ecommerce
-  # Misma variable que RABBITMQ_DEFAULT_PASS del servicio rabbitmq (una sola fuente por secreto).
   SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Falta RABBITMQ_PASSWORD. Copia .env.example a .env y rellenalo}
 
-# ---------------------------------------------------------------------------------------------
-# Opciones JVM comunes (se repiten literalmente en cada JAVA_OPTS porque YAML no concatena):
-#   -XX:+UseSerialGC               GC de un hilo, minima memoria nativa. (Con <2 CPU la JVM ya lo
-#                                  elegia sola; se fija para que no dependa de la deteccion.)
-#   -XX:MaxMetaspaceSize=96m       techo de metaspace; order-api usa 128m (Hibernate/JPA).
-#   -XX:TieredStopAtLevel=1        solo compilador C1: menos code cache y menos CPU de JIT.
-#   -Xss512k                       pila de 512 KB por hilo (por defecto 1 MB).
-#   -XX:MaxDirectMemorySize=32m    techo de buffers directos (NIO).
-#   -XX:+ExitOnOutOfMemoryError    ante un OOM la JVM termina: el contenedor reinicia y el fallo
-#                                  queda VISIBLE (RestartCount), en vez de un proceso zombi.
-#   -Dspring.jmx.enabled=false     JMX de Spring apagado (ya es el valor por defecto en Boot 3).
-# ---------------------------------------------------------------------------------------------
-
 services:
-
-  # ===========================================================================================
-  # Infraestructura
-  # ===========================================================================================
 
   postgres-db:
     image: postgres:16-alpine
@@ -92,11 +38,7 @@ services:
     environment:
       POSTGRES_DB: ecommerce
       POSTGRES_USER: ecommerce
-      # Solo se aplica al INICIALIZAR un volumen vacio. Con datos existentes, cambiar esta variable
-      # NO cambia la contrasena del rol: hay que hacerlo dentro de PostgreSQL (\password ecommerce).
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD. Copia .env.example a .env y rellenalo}
-    # Parametros de ejecucion (no modifican los datos del volumen; se pueden quitar en cualquier
-    # momento). Unico cliente: Hikari de order-api con 3 conexiones como maximo.
     command:
       - postgres
       - -c
@@ -107,8 +49,6 @@ services:
       - work_mem=2MB
       - -c
       - maintenance_work_mem=16MB
-    # SIN ports: solo accesible como postgres-db:5432 dentro de ecommerce-net.
-    # Para consultar:  docker exec -it postgres-db psql -U ecommerce -d ecommerce
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -128,9 +68,6 @@ services:
     container_name: kafka
     restart: unless-stopped
     logging: *logging
-    # SIN ports. Listeners SIN CAMBIOS respecto a la etapa 7: INTERNAL (kafka:9092) lo usan los
-    # contenedores; EXTERNAL (29092) queda definido pero sin publicar, asi que nadie fuera de
-    # Docker puede usarlo. CONTROLLER (9093) es interno de KRaft.
     environment:
       KAFKA_NODE_ID: 1
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
@@ -145,17 +82,9 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      # Igual que en la etapa 7: cada topic lo crea su productor (new_orders con 3 particiones).
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-      # Heap 256m maximo (etapa 7: 768m). Xms128m en lugar de Xms=Xmx: con poca carga G1 se queda
-      # cerca de Xms y el residente en reposo es menor; si hace falta crece hasta 256m.
       KAFKA_HEAP_OPTS: "-Xmx256m -Xms128m"
     healthcheck:
-      # MISMA comprobacion que en la etapa 7 (kafka-topics --list contra el broker), pero:
-      #  - la JVM del healthcheck corre DENTRO del cgroup de kafka y heredaba KAFKA_HEAP_OPTS del
-      #    broker; aqui se le da un heap propio de 48m, GC serie y solo C1 para que no sume
-      #    ~150 MB ni queme CPU (creditos T3) cada vez que se ejecuta.
-      #  - intervalo 30s una vez sano; durante el arranque se comprueba cada 10s.
       test: ["CMD-SHELL", "KAFKA_HEAP_OPTS='-Xmx48m -Xms16m' KAFKA_JVM_PERFORMANCE_OPTS='-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k' /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
       interval: 30s
       timeout: 20s
@@ -168,7 +97,6 @@ services:
     networks:
       - ecommerce-net
 
-  # Broker de comandos. 5672 (AMQP) NO se publica; 15672 (consola web) SOLO en 127.0.0.1 de EC2.
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
@@ -176,23 +104,11 @@ services:
     logging: *logging
     environment:
       RABBITMQ_DEFAULT_USER: ecommerce
-      # Solo se aplica si el nodo NO tiene base de datos. Con un nodo existente, cambiar esta
-      # variable NO cambia la contrasena: rabbitmqctl change_password (ver docs/despliegue-aws.md).
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Falta RABBITMQ_PASSWORD. Copia .env.example a .env y rellenalo}
-      # Erlang con 1 planificador y SIN espera activa (busy-wait): en reposo no consume CPU, lo
-      # que en T3 ahorra creditos. No afecta a colas, exchanges ni a la concurrencia de los workers
-      # (esa la fija cada worker: concurrency 2, prefetch 1).
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "+S 1:1 +sbwt none +sbwtdcpu none +sbwtdio none"
     ports:
-      # Consola web publicada SOLO en el loopback de la instancia: no es alcanzable desde Internet
-      # aunque el Security Group tuviera 15672 abierto. Acceso desde el PC por tunel SSH:
-      #   ssh -i <clave.pem> -N -L 15672:127.0.0.1:15672 ubuntu@<IP_PUBLICA_EC2>
-      #   y abrir http://localhost:15672 en el navegador del PC.
       - "127.0.0.1:15672:15672"
     volumes:
-      # Umbral de memoria ABSOLUTO (vm_memory_high_watermark). Imprescindible con un limite
-      # pequeno: el umbral relativo por defecto (0.4) se calcularia sobre la RAM del host o sobre
-      # el limite del contenedor y, en ambos casos, quedaria mal situado respecto a los 224M.
       - type: bind
         source: ./ops/aws/rabbitmq/20-aws.conf
         target: /etc/rabbitmq/conf.d/20-aws.conf
@@ -211,11 +127,6 @@ services:
         limits: { memory: 224M, cpus: "0.4" }
     networks:
       - ecommerce-net
-
-  # ===========================================================================================
-  # Microservicios. depends_on IDENTICOS a la etapa 7. El orden estricto de arranque lo impone
-  # ops/aws/arrancar-aws.sh (infra -> order-api -> dashboard+analytics -> workers -> processor).
-  # ===========================================================================================
 
   billing-worker:
     <<: *microservicio
@@ -270,12 +181,10 @@ services:
     environment:
       <<: *kafka-env
       JAVA_OPTS: "-Xmx96m -XX:+UseSerialGC -XX:MaxMetaspaceSize=96m -XX:TieredStopAtLevel=1 -Xss512k -XX:MaxDirectMemorySize=32m -XX:+ExitOnOutOfMemoryError -Dspring.jmx.enabled=false"
-      # Pagina estatica + WebSocket /ws/ordenes. Las conexiones WebSocket no ocupan un hilo de
-      # Tomcat mientras estan abiertas (NIO); 15 hilos sobran para unos pocos navegadores.
       SERVER_TOMCAT_THREADS_MAX: 15
       SERVER_TOMCAT_THREADS_MIN_SPARE: 2
     ports:
-      - "8081:8081"                        # pagina del dashboard + WebSocket /ws/ordenes
+      - "8081:8081"
     depends_on:
       kafka: { condition: service_healthy }
     healthcheck:
@@ -298,24 +207,18 @@ services:
       <<: *kafka-env
       DB_URL: jdbc:postgresql://postgres-db:5432/ecommerce
       DB_USER: ecommerce
-      # Misma variable que POSTGRES_PASSWORD del servicio postgres-db.
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD. Copia .env.example a .env y rellenalo}
       CORS_ORIGINS: "*"
-      # Metaspace 128m (no 96m): Hibernate/JPA carga muchas mas clases que los demas modulos.
-      # user.language/country: mensajes de validacion de los 400 en espanol (igual que en la etapa 7).
       JAVA_OPTS: "-Xmx128m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m -XX:TieredStopAtLevel=1 -Xss512k -XX:MaxDirectMemorySize=32m -XX:+ExitOnOutOfMemoryError -Dspring.jmx.enabled=false -Duser.language=es -Duser.country=CO"
-      # Pool de PostgreSQL: 3 conexiones (POST /order es una transaccion corta). Si las 15
-      # peticiones simultaneas superaran el pool, esperan (connection-timeout 30 s), no fallan.
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 3
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 1
       SERVER_TOMCAT_THREADS_MAX: 15
       SERVER_TOMCAT_THREADS_MIN_SPARE: 2
     ports:
-      - "8080:8080"                        # POST /order
+      - "8080:8080"
     depends_on:
       postgres-db: { condition: service_healthy }
       kafka: { condition: service_healthy }
-    # Sano = el puerto 8080 acepta conexiones, lo que ocurre despues de que Spring creo new_orders.
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
       interval: 10s

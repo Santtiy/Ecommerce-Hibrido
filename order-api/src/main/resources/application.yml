@@ -6,32 +6,25 @@ spring:
     name: order-api
 
   datasource:
-    # DB_URL completa en Docker (jdbc:postgresql://postgres-db:5432/ecommerce); si no se define,
-    # se arma con DB_HOST/DB_PORT/DB_NAME, cuyo valor por defecto es el contenedor visto desde el host.
     url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:ecommerce}}
     username: ${DB_USER:ecommerce}
-    # Sin valor por defecto en el codigo: llega por variable de entorno (.env en local, docker-compose.yml en Docker).
     password: ${DB_PASSWORD:}
 
   jpa:
     hibernate:
-      ddl-auto: update        # crea/ajusta las tablas ordenes e items_orden al arrancar
+      ddl-auto: update
     open-in-view: false
 
   jackson:
     serialization:
-      write-dates-as-timestamps: false   # Instant en ISO-8601 legible
+      write-dates-as-timestamps: false
 
   kafka:
-    # EXTERNAL listener de docker-compose; se cambia con la variable KAFKA_BOOTSTRAP.
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
     producer:
       properties:
-        # Sin cabeceras con el nombre de la clase: el consumidor no depende del paquete del productor.
         spring.json.add.type.headers: false
 
 app:
   cors:
-    # Origenes que pueden llamar a POST /order desde el navegador (separados por comas).
-    # '*' por ser una herramienta academica local; en la VM o en produccion se fija con CORS_ORIGINS.
     origins: ${CORS_ORIGINS:*}

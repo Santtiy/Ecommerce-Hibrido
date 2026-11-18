@@ -6,10 +6,7 @@ import co.edu.proyecto.orden.dominio.excepciones.OrdenInvalidaException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entidad rica: protege sus invariantes. No tiene setters; el estado solo cambia
- * mediante métodos de negocio. Solo {@link OrdenBuilder} puede crearla.
- */
+/** Entidad rica. */
 public class Orden {
 
     private final OrdenId id;
@@ -26,13 +23,6 @@ public class Orden {
         this.total = Dinero.cero(items.get(0).precioUnitario().moneda());
     }
 
-    /**
-     * Reconstruye una orden ya existente a partir de su estado almacenado.
-     *
-     * <p><b>Exclusivo para adaptadores de persistencia.</b> No aplica las reglas de creación
-     * porque la orden ya las cumplió cuando nació. El código de aplicación debe crear
-     * órdenes siempre con {@link OrdenBuilder}.
-     */
     public static Orden reconstituir(OrdenId id, String cliente, List<ItemOrden> items,
                                      EstadoOrden estado, Dinero total) {
         if (id == null || cliente == null || estado == null || total == null
@@ -56,7 +46,6 @@ public class Orden {
         items.add(item);
     }
 
-    /** RN-04: subtotal de ítems, luego descuento, luego impuesto. Guarda y devuelve el total. */
     public Dinero calcularTotal(EstrategiaDescuento descuento, EstrategiaImpuesto impuesto) {
         if (descuento == null || impuesto == null) {
             throw new OrdenInvalidaException("Las estrategias de descuento e impuesto son obligatorias");
@@ -70,7 +59,6 @@ public class Orden {
         return total;
     }
 
-    /** RN-06: solo una orden CREADA puede pagarse. */
     public void confirmarPago() {
         if (estado != EstadoOrden.CREADA) {
             throw new EstadoInvalidoException(
@@ -79,7 +67,6 @@ public class Orden {
         estado = EstadoOrden.PAGADA;
     }
 
-    /** RN-07: una orden pagada no puede cancelarse. */
     public void cancelar() {
         if (estado == EstadoOrden.PAGADA) {
             throw new EstadoInvalidoException("Una orden pagada no puede cancelarse");

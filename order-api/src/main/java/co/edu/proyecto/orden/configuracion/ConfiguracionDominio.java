@@ -10,11 +10,7 @@ import co.edu.proyecto.orden.dominio.puertos.PublicadorEventos;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Ensambla el dominio y la aplicación sin anotarlos con Spring: así el dominio sigue siendo
- * Java puro y la inyección por constructor queda visible en un único lugar.
- * Para cambiar de regla de descuento o de impuesto solo se cambia el bean (Strategy + OCP).
- */
+/** Ensambla el dominio y la aplicación sin anotarlos con Spring. */
 @Configuration
 public class ConfiguracionDominio {
 

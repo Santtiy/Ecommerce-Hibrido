@@ -58,7 +58,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <!-- Sin spring-boot-starter-parent el goal repackage no se enlaza solo: sin esto el jar no es ejecutable. -->
                 <executions>
                     <execution>
                         <goals>

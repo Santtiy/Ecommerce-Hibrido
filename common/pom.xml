@@ -12,5 +12,4 @@
 
     <artifactId>common</artifactId>
     <packaging>jar</packaging>
-    <!-- Java puro: contratos de mensajería compartidos, sin dependencias de Spring. -->
 </project>

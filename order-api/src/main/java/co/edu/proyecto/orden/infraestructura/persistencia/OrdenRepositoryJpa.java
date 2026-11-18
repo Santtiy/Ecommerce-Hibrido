@@ -8,10 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-/**
- * Adaptador: implementa el puerto de dominio {@link OrdenRepository} con JPA.
- * Es el único punto donde el dominio y la base de datos se encuentran.
- */
+/** Adaptador. */
 @Repository
 public class OrdenRepositoryJpa implements OrdenRepository {
 
@@ -30,7 +27,6 @@ public class OrdenRepositoryJpa implements OrdenRepository {
         return mapper.aDominio(guardada);
     }
 
-    /** Transaccional para que la colección perezosa de ítems se cargue antes de mapear. */
     @Override
     @Transactional(readOnly = true)
     public Optional<Orden> buscarPorId(OrdenId id) {

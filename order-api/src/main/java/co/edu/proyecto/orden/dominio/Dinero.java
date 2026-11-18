@@ -5,10 +5,7 @@ import co.edu.proyecto.orden.dominio.excepciones.DominioException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * Value Object inmutable: un monto en una moneda.
- * Valida en el constructor (Fail-Fast) y cada operación devuelve una instancia nueva.
- */
+/** Value Object inmutable. */
 public record Dinero(BigDecimal monto, String moneda) {
 
     private static final int ESCALA = 2;
@@ -18,7 +15,7 @@ public record Dinero(BigDecimal monto, String moneda) {
             throw new DominioException("El monto no puede ser nulo");
         }
         if (monto.signum() < 0) {
-            throw new DominioException("El monto no puede ser negativo: " + monto); // RN-03
+            throw new DominioException("El monto no puede ser negativo: " + monto);
         }
         if (moneda == null || !moneda.matches("[A-Za-z]{3}")) {
             throw new DominioException("La moneda debe tener exactamente 3 letras: " + moneda);
@@ -59,7 +56,6 @@ public record Dinero(BigDecimal monto, String moneda) {
         return new Dinero(monto.multiply(BigDecimal.valueOf(factor)), moneda);
     }
 
-    /** Devuelve el porcentaje indicado de este monto (p. ej. 10 → el 10 %). */
     public Dinero porcentaje(int porcentaje) {
         return new Dinero(monto.multiply(BigDecimal.valueOf(porcentaje)).movePointLeft(2), moneda);
     }

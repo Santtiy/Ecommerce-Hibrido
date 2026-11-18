@@ -26,7 +26,6 @@ public class ConsumidorNuevasOrdenes {
         agregador.registrar(evento.monto());
         log.info("Orden {} | órdenes acumuladas: {} | total acumulado: {} COP",
                 evento.orderId(), agregador.cantidadOrdenes(), agregador.totalAcumulado());
-        // Etapa 6: registro en archivo y métricas de SO. No lanza excepciones (ver su Javadoc).
         registroOrdenes.alRecibirOrden(evento);
     }
 }

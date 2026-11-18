@@ -2,7 +2,7 @@ package co.edu.proyecto.orden.dominio;
 
 import java.math.BigDecimal;
 
-/** RN-14: si el subtotal supera 100.000 se descuenta el 10 %. Exactamente 100.000 no aplica. */
+/** RN-14. */
 public class DescuentoPorMonto implements EstrategiaDescuento {
 
     private static final BigDecimal UMBRAL = new BigDecimal("100000");

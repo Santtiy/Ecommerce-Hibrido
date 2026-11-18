@@ -30,7 +30,6 @@ public class ManejadorExcepciones {
         return responder(HttpStatus.BAD_REQUEST, "La solicitud tiene campos inválidos", campos);
     }
 
-    /** JSON mal formado o tipos incorrectos: es un error del cliente, no del servidor. */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<RespuestaError> cuerpoIlegible(HttpMessageNotReadableException ex) {
         return responder(HttpStatus.BAD_REQUEST, "El cuerpo de la solicitud no es un JSON válido", List.of());
@@ -46,16 +45,13 @@ public class ManejadorExcepciones {
         return responder(HttpStatus.CONFLICT, ex.getMessage(), List.of());
     }
 
-    /** Cualquier otra regla de dominio violada (p. ej. en Dinero) es un dato inválido, no un fallo interno. */
     @ExceptionHandler(DominioException.class)
     public ResponseEntity<RespuestaError> reglaDeDominio(DominioException ex) {
         return responder(HttpStatus.BAD_REQUEST, ex.getMessage(), List.of());
     }
 
-    /** Último recurso: nunca expone el stack trace al cliente, solo lo registra en el log. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RespuestaError> inesperado(Exception ex) {
-        // Errores propios de Spring MVC (404, 405, 415...) conservan su código HTTP.
         if (ex instanceof ErrorResponse errorSpring) {
             HttpStatusCode estado = errorSpring.getStatusCode();
             return ResponseEntity.status(estado).body(new RespuestaError(

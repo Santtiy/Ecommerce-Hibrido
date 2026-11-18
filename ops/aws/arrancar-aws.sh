@@ -1,49 +1,22 @@
 #!/usr/bin/env bash
-# =============================================================================================
 # arrancar-aws.sh - Arranque POR TANDAS de los diez contenedores en AWS EC2 (Ubuntu 24.04).
-#
-#   bash ops/aws/arrancar-aws.sh
-#   TIMEOUT_INFRA=240 TIMEOUT_APP=300 bash ops/aws/arrancar-aws.sh
-#
-# La consola de RabbitMQ (15672) se publica SOLO en 127.0.0.1 de la instancia; el script lo
-# comprueba tras la tanda 1. Desde el PC se entra por tunel SSH (ver el resumen final).
-#
-# Usa docker-compose.yml con --no-build (las imagenes se cargan antes con docker load).
-# NUNCA borra volumenes, contenedores ni imagenes. Si una tanda falla, se detiene, muestra los
-# logs del servicio afectado y NO lanza las siguientes (lo ya arrancado se deja en marcha para
-# poder inspeccionarlo; ops/aws/detener-aws.sh lo para).
-#
-# ORDEN (verificado contra depends_on y el codigo):
-#   1. postgres-db, kafka, rabbitmq ............ esperar healthy
-#   2. order-api ............................... crea new_orders (3 particiones); esperar healthy
-#   3. dashboard-aggregator, analytics-service . consumidores; new_orders ya existe
-#   4. billing/inventory/notification-worker ... declaran sus colas y crean sus topics de resultado
-#   5. order-processor ......................... AL FINAL: publica en el exchange fanout order_tasks,
-#                                                que DESCARTA los mensajes si aun no hay colas enlazadas.
-# Con KAFKA_AUTO_CREATE_TOPICS_ENABLE=false ningun consumidor puede crear new_orders con 1 particion.
-# =============================================================================================
 
 set -euo pipefail
 
-# Raiz del proyecto = dos niveles por encima de este script (ops/aws/).
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ARCHIVO_COMPOSE="$RAIZ/docker-compose.yml"
 COMPOSE=(docker compose -f "$ARCHIVO_COMPOSE")
 
-TIMEOUT_INFRA="${TIMEOUT_INFRA:-180}"   # segundos para la tanda de infraestructura
-TIMEOUT_APP="${TIMEOUT_APP:-240}"       # segundos para cada tanda de microservicios
+TIMEOUT_INFRA="${TIMEOUT_INFRA:-180}"
+TIMEOUT_APP="${TIMEOUT_APP:-240}"
 INTERVALO=5
 
 INFRA=(postgres-db kafka rabbitmq)
 MICROSERVICIOS=(order-api dashboard-aggregator analytics-service billing-worker inventory-worker notification-worker order-processor)
 IMAGENES_INFRA=(postgres:16-alpine apache/kafka:3.7.0 rabbitmq:3.13-management-alpine)
 
-# Linea de Spring Boot que indica arranque completo (listeners de Kafka/RabbitMQ ya iniciados).
 PATRON_STARTED='Started [^ ]+ in [0-9.,]+ seconds'
 
-# ---------------------------------------------------------------------------------------------
-# Utilidades de salida
-# ---------------------------------------------------------------------------------------------
 if [ -t 1 ]; then C_AZUL=$'\e[36m'; C_VERDE=$'\e[32m'; C_ROJO=$'\e[31m'; C_AMAR=$'\e[33m'; C_FIN=$'\e[0m'
 else C_AZUL=''; C_VERDE=''; C_ROJO=''; C_AMAR=''; C_FIN=''; fi
 
@@ -58,7 +31,6 @@ fallar() {
     exit 1
 }
 
-# Estado de memoria del host y de los contenedores.
 mostrar_recursos() {
     echo "--- free -h"
     free -h
@@ -68,7 +40,6 @@ mostrar_recursos() {
     "${COMPOSE[@]}" ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}' || true
 }
 
-# Diagnostico completo de un servicio que fallo.
 diagnosticar() {
     local c="$1"
     printf '\n%s----- Diagnostico de %s -----%s\n' "$C_AMAR" "$c" "$C_FIN"
@@ -80,16 +51,11 @@ diagnosticar() {
     mostrar_recursos
 }
 
-# ---------------------------------------------------------------------------------------------
-# Estado de un contenedor
-# ---------------------------------------------------------------------------------------------
 estado()     { docker inspect -f '{{.State.Status}}' "$1" 2>/dev/null || echo "inexistente"; }
 salud()      { docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}sin-healthcheck{{end}}' "$1" 2>/dev/null || echo "inexistente"; }
 reinicios()  { docker inspect -f '{{.RestartCount}}' "$1" 2>/dev/null || echo 0; }
 inicio_iso() { docker inspect -f '{{.State.StartedAt}}' "$1" 2>/dev/null || echo ""; }
 
-# Cuenta las lineas "Started ..." escritas DESDE el ultimo arranque del contenedor (un log de una
-# ejecucion anterior no cuenta). grep -c lee toda la entrada: sin SIGPIPE con pipefail.
 started_en_log() {
     local c="$1" desde
     desde="$(inicio_iso "$c")"
@@ -97,11 +63,6 @@ started_en_log() {
     docker logs --since "$desde" "$c" 2>&1 | grep -cE "$PATRON_STARTED" || true
 }
 
-# Espera a que TODOS los servicios indicados esten listos:
-#   - con healthcheck: Health.Status = healthy
-#   - sin healthcheck (workers, processor, analytics): log "Started ... in ... seconds"
-# Falla en cuanto un contenedor sale (exited/dead), lo mata el OOM killer, reinicia (crash loop),
-# su healthcheck pasa a unhealthy, o se agota el tiempo.
 esperar_listos() {
     local timeout="$1"; shift
     local servicios=("$@")
@@ -150,14 +111,11 @@ esperar_listos() {
     done
 }
 
-# Lanza una tanda y espera a que este lista.
 tanda() {
     local numero="$1" timeout="$2"; shift 2
     local servicios=("$@")
     titulo "Tanda $numero: ${servicios[*]}"
     local t0; t0="$(ahora)"
-    # --no-build: nunca compila en EC2. Sin --wait: la espera la hace esperar_listos, que tambien
-    # cubre los servicios sin healthcheck y muestra el log si algo falla.
     "${COMPOSE[@]}" up -d --no-build "${servicios[@]}" \
         || { for s in "${servicios[@]}"; do diagnosticar "$s"; done; fallar "docker compose up fallo en la tanda $numero."; }
     esperar_listos "$timeout" "${servicios[@]}"
@@ -165,9 +123,6 @@ tanda() {
     mostrar_recursos
 }
 
-# ---------------------------------------------------------------------------------------------
-# Comprobaciones previas (no modifican nada)
-# ---------------------------------------------------------------------------------------------
 titulo "Comprobaciones previas"
 
 command -v docker >/dev/null 2>&1 || fallar "docker no esta instalado."
@@ -176,18 +131,14 @@ docker compose version >/dev/null 2>&1 || fallar "Docker Compose V2 no esta disp
 [ -f "$ARCHIVO_COMPOSE" ]        || fallar "No existe $ARCHIVO_COMPOSE"
 [ -f "$RAIZ/ops/aws/rabbitmq/20-aws.conf" ] || fallar "Falta ops/aws/rabbitmq/20-aws.conf (lo monta rabbitmq)."
 
-# Cuenta bytes CR con tr (fiable en cualquier grep/plataforma) sin mostrar el contenido.
 tiene_crlf() { [ "$(tr -cd '\r' < "$1" | wc -c)" -gt 0 ]; }
 
-# Finales de linea de Windows en la conf de RabbitMQ (compose admite CRLF; RabbitMQ no se garantiza).
 if tiene_crlf "$RAIZ/ops/aws/rabbitmq/20-aws.conf"; then
     fallar "ops/aws/rabbitmq/20-aws.conf tiene finales de linea CRLF. Corrige con: sed -i 's/\r\$//' ops/aws/rabbitmq/20-aws.conf ops/aws/*.sh"
 fi
 
-# Credenciales (.env junto a docker-compose.yml). Se comprueba SIN mostrar ningun valor.
 ARCHIVO_ENV="$RAIZ/.env"
 if [ -f "$ARCHIVO_ENV" ]; then
-    # CRLF anadiria "\r" al final de cada contrasena y la autenticacion fallaria.
     if tiene_crlf "$ARCHIVO_ENV"; then
         fallar ".env tiene finales de linea CRLF. Corrige con: sed -i 's/\r\$//' .env"
     fi
@@ -206,12 +157,9 @@ else
     fallar "No existe .env. Crealo con: cp .env.example .env && chmod 600 .env (y rellena los valores)."
 fi
 
-# --quiet: valida sin imprimir el modelo resuelto (que incluiria las contrasenas).
 "${COMPOSE[@]}" config --quiet || fallar "docker-compose.yml no es valido (o faltan variables de .env)."
 ok "docker-compose.yml valido"
 
-# Imagenes: las siete propias deben estar cargadas (docker load); las de infraestructura,
-# descargadas (docker compose pull postgres-db kafka rabbitmq).
 faltan=()
 while read -r img; do
     [ -n "$img" ] || continue
@@ -223,7 +171,6 @@ if [ "${#faltan[@]}" -gt 0 ]; then
 fi
 ok "Las $( "${COMPOSE[@]}" config --images | wc -l ) imagenes existen localmente"
 
-# Memoria disponible del host antes de empezar (solo aviso: el limite real lo marca el uso).
 mem_disp_mb=$(( $(awk '/MemAvailable/ {print $2}' /proc/meminfo) / 1024 ))
 swap_total_mb=$(( $(awk '/SwapTotal/ {print $2}' /proc/meminfo) / 1024 ))
 echo "  MemAvailable=${mem_disp_mb} MiB  SwapTotal=${swap_total_mb} MiB  CPUs=$(nproc)"
@@ -232,15 +179,10 @@ echo "  MemAvailable=${mem_disp_mb} MiB  SwapTotal=${swap_total_mb} MiB  CPUs=$(
 
 mostrar_recursos
 
-# ---------------------------------------------------------------------------------------------
-# Secuencia
-# ---------------------------------------------------------------------------------------------
 INICIO_TOTAL="$(ahora)"
 
 tanda 1 "$TIMEOUT_INFRA" "${INFRA[@]}"
 
-# La consola de RabbitMQ debe estar SOLO en loopback. Si docker port muestra otra direccion
-# (0.0.0.0 o [::]), se detiene: alguien cambio el compose y la consola quedaria expuesta.
 titulo "Comprobando que 15672 solo escucha en 127.0.0.1"
 PUBLICACIONES_15672="$(docker port rabbitmq 15672/tcp 2>/dev/null || true)"
 echo "  docker port rabbitmq 15672 -> ${PUBLICACIONES_15672:-(sin publicar)}"
@@ -254,13 +196,8 @@ tanda 3 "$TIMEOUT_APP"   dashboard-aggregator analytics-service
 tanda 4 "$TIMEOUT_APP"   billing-worker inventory-worker notification-worker
 tanda 5 "$TIMEOUT_APP"   order-processor
 
-# ---------------------------------------------------------------------------------------------
-# Resumen
-# ---------------------------------------------------------------------------------------------
 titulo "Los diez contenedores estan listos ($(( $(ahora) - INICIO_TOTAL )) s)"
 
-# Evaluacion de RAM: el swap es un colchon para picos, NO memoria de trabajo. Si con el sistema
-# en reposo ya hay swap en uso o queda poca RAM disponible, la instancia esta justa.
 mem_disp_fin=$(( $(awk '/MemAvailable/ {print $2}' /proc/meminfo) / 1024 ))
 swap_usado_fin=$(( ( $(awk '/SwapTotal/ {print $2}' /proc/meminfo) - $(awk '/SwapFree/ {print $2}' /proc/meminfo) ) / 1024 ))
 echo "  RAM disponible: ${mem_disp_fin} MiB   swap en uso: ${swap_usado_fin} MiB"
@@ -270,7 +207,6 @@ if [ "$mem_disp_fin" -lt 250 ] || [ "$swap_usado_fin" -gt 150 ]; then
 else
     ok "Margen de RAM suficiente en reposo"
 fi
-# IP publica desde el servicio de metadatos de la propia instancia (IMDSv2, red local de EC2).
 TOKEN_IMDS="$(curl -s -m 2 -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' 2>/dev/null || true)"
 IP_PUBLICA=""
 [ -n "$TOKEN_IMDS" ] && IP_PUBLICA="$(curl -s -m 2 -H "X-aws-ec2-metadata-token: $TOKEN_IMDS" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)"

@@ -14,20 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Modelo de PERSISTENCIA de la tabla "ordenes", no modelo de dominio.
- * Tiene constructor vacío y setters porque JPA los necesita; no es un modelo anémico
- * porque no representa al negocio: las reglas viven en {@code dominio.Orden} y
- * {@link OrdenMapper} traduce entre ambos.
- *
- * <p>creadaEn vive solo en persistencia porque es metadato de auditoría y ninguna
- * regla de negocio depende de él.
- */
+/** Modelo de PERSISTENCIA de la tabla "ordenes", no modelo de dominio. */
 @Entity
 @Table(name = "ordenes")
 public class OrdenEntity {
 
-    /** Sin @GeneratedValue: el id lo genera el dominio (OrdenBuilder) antes de persistir. */
     @Id
     private UUID id;
 
@@ -57,7 +48,6 @@ public class OrdenEntity {
         this.creadaEn = Instant.now();
     }
 
-    /** Mantiene las dos puntas de la relación sincronizadas. */
     public void agregarItem(ItemOrdenEntity item) {
         item.setOrden(this);
         items.add(item);

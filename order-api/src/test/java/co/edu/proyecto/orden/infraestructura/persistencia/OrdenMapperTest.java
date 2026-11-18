@@ -29,13 +29,10 @@ class OrdenMapperTest {
 
     @Test
     void idaYVueltaConservaIdClienteEstadoTotalYNumeroDeItems() {
-        // Arrange
         Orden original = ordenDePrueba();
 
-        // Act
         Orden reconstruida = mapper.aDominio(mapper.aEntidad(original));
 
-        // Assert
         assertEquals(original.id(), reconstruida.id());
         assertEquals(original.cliente(), reconstruida.cliente());
         assertEquals(original.estado(), reconstruida.estado());
@@ -45,13 +42,10 @@ class OrdenMapperTest {
 
     @Test
     void elMapeoTrasladaMontoYMonedaDeCadaItem() {
-        // Arrange
         Orden orden = ordenDePrueba();
 
-        // Act
         OrdenEntity entidad = mapper.aEntidad(orden);
 
-        // Assert
         assertEquals(2, entidad.getItems().size());
         ItemOrdenEntity primero = entidad.getItems().get(0);
         ItemOrdenEntity segundo = entidad.getItems().get(1);

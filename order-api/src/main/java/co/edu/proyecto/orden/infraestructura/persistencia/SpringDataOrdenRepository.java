@@ -4,6 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-/** Repositorio técnico de Spring Data. Solo lo usa {@link OrdenRepositoryJpa}; el dominio no lo conoce. */
+/** Repositorio técnico de Spring Data. */
 public interface SpringDataOrdenRepository extends JpaRepository<OrdenEntity, UUID> {
 }

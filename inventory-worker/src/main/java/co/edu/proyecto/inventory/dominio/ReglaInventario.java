@@ -5,7 +5,7 @@ import co.edu.proyecto.common.contratos.ResultadoTarea;
 
 import java.time.Instant;
 
-/** RN-12: no hay existencias para más de 10 unidades por orden. Clase pura, sin Spring. */
+/** RN-12. */
 public class ReglaInventario {
 
     public static final int MAXIMO_UNIDADES = 10;

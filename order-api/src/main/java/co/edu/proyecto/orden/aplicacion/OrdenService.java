@@ -16,10 +16,7 @@ import co.edu.proyecto.orden.dominio.puertos.PublicadorEventos;
 import java.time.Instant;
 import java.util.Objects;
 
-/**
- * Caso de uso: registrar una orden. Depende solo de abstracciones (DIP),
- * recibidas por constructor.
- */
+/** Caso de uso. */
 public class OrdenService {
 
     private static final String MONEDA = "COP";
@@ -42,27 +39,21 @@ public class OrdenService {
             throw new OrdenInvalidaException("La solicitud no puede ser nula");
         }
 
-        // 1. Construir la orden (el Builder valida las reglas de creación).
         OrdenBuilder builder = new OrdenBuilder().cliente(solicitud.cliente());
         for (ItemRequest item : solicitud.items()) {
             builder.agregarItem(aItemOrden(item));
         }
         Orden orden = builder.construir();
 
-        // 2. Calcular el total con las estrategias inyectadas.
         orden.calcularTotal(descuento, impuesto);
 
-        // 3. Persistir.
         Orden guardada = repositorio.guardar(orden);
 
-        // 4. Publicar el evento solo si la persistencia tuvo éxito.
         publicador.publicar(aEvento(guardada));
 
-        // 5. Devolver la orden.
         return guardada;
     }
 
-    /** Solo traduce el DTO al dominio; las reglas las validan Dinero e ItemOrden. */
     private ItemOrden aItemOrden(ItemRequest item) {
         return new ItemOrden(item.sku(), item.nombre(), item.cantidad(),
                 new Dinero(item.precioUnitario(), MONEDA));

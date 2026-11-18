@@ -5,7 +5,7 @@ import co.edu.proyecto.orden.dominio.OrdenId;
 
 import java.util.Optional;
 
-/** Puerto (patrón Repository): el dominio define el contrato; la infraestructura lo implementará. */
+/** Puerto (patrón Repository). */
 public interface OrdenRepository {
 
     Orden guardar(Orden orden);

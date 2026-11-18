@@ -1,6 +1,4 @@
-# Los scripts Bash y la configuracion de RabbitMQ se ejecutan/leen en Ubuntu: siempre con LF,
-# aunque el repositorio se clone en Windows con core.autocrlf=true.
+# Los scripts Bash y la configuracion de RabbitMQ se ejecutan/leen en Ubuntu.
 *.sh   text eol=lf
 *.conf text eol=lf
-# El script de PowerShell 5.1 se ejecuta en Windows.
 *.ps1  text eol=crlf

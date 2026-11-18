@@ -14,10 +14,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Acceso al sistema de archivos: registro de órdenes en un archivo de texto, solo por anexión.
- * Usa java.nio.file.Files, que delega en las llamadas al sistema operativo (open, write, close).
- */
+/** Acceso al sistema de archivos. */
 @Component
 public class GestorArchivos {
 
@@ -30,7 +27,7 @@ public class GestorArchivos {
         try {
             Path directorio = this.ruta.getParent();
             if (directorio != null) {
-                Files.createDirectories(directorio);   // no falla si ya existe
+                Files.createDirectories(directorio);
             }
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo crear el directorio de " + this.ruta, e);
@@ -38,11 +35,6 @@ public class GestorArchivos {
         log.info("Registro de órdenes en {}", this.ruta);
     }
 
-    /**
-     * Añade una línea al final del archivo y mide bytes escritos y tiempo empleado.
-     * synchronized: varios hilos del consumidor escriben a la vez, y el método es la sección
-     * crítica que impide que dos líneas se intercalen dentro del mismo archivo.
-     */
     public synchronized ResultadoES escribir(String linea) {
         byte[] datos = (linea + System.lineSeparator()).getBytes(StandardCharsets.UTF_8);
         long inicio = System.nanoTime();

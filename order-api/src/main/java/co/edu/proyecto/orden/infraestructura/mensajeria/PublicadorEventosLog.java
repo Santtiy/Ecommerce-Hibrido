@@ -7,10 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/**
- * Respaldo para demostrar la etapa 2 sin Kafka: solo escribe el evento en el log.
- * Se activa arrancando con el perfil "sin-kafka".
- */
+/** Respaldo para demostrar la etapa 2 sin Kafka. */
 @Component
 @Profile("sin-kafka")
 public class PublicadorEventosLog implements PublicadorEventos {

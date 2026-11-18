@@ -30,11 +30,8 @@
         <byte-buddy.version>1.17.6</byte-buddy.version>
     </properties>
 
-    <!-- Spring Boot se usa SOLO como BOM: gestiona versiones (JUnit 5, Mockito), no agrega dependencias. -->
     <dependencyManagement>
         <dependencies>
-            <!-- Versiones explícitas: con un BOM importado no basta sobrescribir propiedades.
-                 Byte Buddy 1.14.x (el del BOM 3.3.5) no soporta JVM más nuevas que Java 23. -->
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
@@ -73,7 +70,6 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- Solo para "mvn spring-boot:run"; el BOM importado no gestiona versiones de plugins. -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
@@ -92,7 +88,6 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.5</version>
                     <configuration>
-                        <!-- Permite a Byte Buddy (Mockito) operar sobre JVM más nuevas que las que soporta oficialmente y carga su agente sin advertencias. -->
                         <argLine>-Dnet.bytebuddy.experimental=true -XX:+EnableDynamicAgentLoading</argLine>
                     </configuration>
                 </plugin>

@@ -1,5 +1,4 @@
 # Lo que NO se envia al demonio de Docker como contexto de construccion.
-# El builder compila desde el codigo fuente, asi que las salidas locales sobran.
 target/
 */target/
 .git/
@@ -11,13 +10,10 @@ evidencias/
 docs/
 ops/pids.txt
 *.log
-# Credenciales locales: nunca en el contexto de construccion (la etapa builder hace COPY . .).
-# Se excluye tambien .env.example: no lo necesita ninguna imagen.
 .env
 .env.*
 **/.env
 **/.env.*
-# Claves, respaldos y documentos de entrega: nunca en el contexto de construccion.
 *.pem
 *.key
 *.ppk

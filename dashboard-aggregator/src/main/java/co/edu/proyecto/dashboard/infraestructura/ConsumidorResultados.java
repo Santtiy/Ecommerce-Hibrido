@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/** Un listener por topic de resultados. Cada uno actualiza su campo y emite por WebSocket. */
+/** Un listener por topic de resultados. */
 @Component
 public class ConsumidorResultados {
 

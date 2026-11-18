@@ -15,31 +15,18 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-/**
- * Productor de Kafka de order-api.
- *
- * <p>ADVERTENCIA sobre grupos de consumidores: analytics-service consume este topic con el
- * grupo "analytics-group" y order_processor (etapa 4) usará "processor-group". Deben ser
- * DISTINTOS: si coincidieran, Kafka los trataría como dos instancias del mismo consumidor y
- * entregaría cada evento a uno solo de los dos, procesando la mitad de las órdenes sin lanzar
- * ninguna excepción.
- */
+/** Productor de Kafka de order-api. */
 @Configuration
 @Profile("!sin-kafka")
 public class ConfiguracionKafka {
 
     public static final String TOPIC_NUEVAS_ORDENES = "new_orders";
 
-    /** KafkaAdmin (autoconfigurado por Spring Boot) crea el topic al arrancar si no existe. */
     @Bean
     public NewTopic nuevasOrdenes() {
         return TopicBuilder.name(TOPIC_NUEVAS_ORDENES).partitions(3).replicas(1).build();
     }
 
-    /**
-     * Fábrica explícita para inyectar el ObjectMapper de Spring, que trae el módulo de
-     * java.time. El JsonSerializer por defecto crea el suyo propio y no sabe serializar Instant.
-     */
     @Bean
     public ProducerFactory<String, OrdenCreada> producerFactory(KafkaProperties propiedades,
                                                                SslBundles sslBundles,

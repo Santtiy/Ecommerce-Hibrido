@@ -7,10 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
-/**
- * Registra cada orden recibida en un archivo y mide el coste de E/S y el uso de memoria.
- * Lo invoca ConsumidorNuevasOrdenes, a continuación del acumulado de ventas.
- */
+/** Registra cada orden recibida en un archivo y mide el coste de E/S y el uso de memoria. */
 @Component
 public class RegistroOrdenesListener {
 
@@ -24,10 +21,6 @@ public class RegistroOrdenesListener {
         this.monitor = monitor;
     }
 
-    /**
-     * Nunca propaga una excepción: si el disco fallara y la excepción llegara al listener de Kafka,
-     * este reintentaría el mensaje y la orden se sumaría dos veces al acumulado de ventas.
-     */
     public void alRecibirOrden(OrdenCreada evento) {
         try {
             String linea = String.join(";", evento.orderId(), evento.monto().toPlainString(), Instant.now().toString());

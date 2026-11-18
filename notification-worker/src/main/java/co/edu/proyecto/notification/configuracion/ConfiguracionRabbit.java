@@ -13,11 +13,7 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Topología de RabbitMQ que necesita este worker. Cada worker declara por su cuenta el exchange
- * order_tasks, su propia cola y su binding (y también el DLX y failed_tasks): declarar algo que ya
- * existe con los mismos parámetros es idempotente, así que el orden de arranque no importa.
- */
+/** Topología de RabbitMQ que necesita este worker. */
 @Configuration
 public class ConfiguracionRabbit {
 
@@ -36,7 +32,6 @@ public class ConfiguracionRabbit {
         return new FanoutExchange(EXCHANGE_FALLOS, true, false);
     }
 
-    /** Un mensaje rechazado sin reencolar (tras agotar los reintentos) va a order_tasks_dlx. */
     @Bean
     public Queue cola() {
         return QueueBuilder.durable(COLA).deadLetterExchange(EXCHANGE_FALLOS).build();
@@ -57,16 +52,11 @@ public class ConfiguracionRabbit {
         return BindingBuilder.bind(colaFallos()).to(exchangeFallos());
     }
 
-    /** Con el ObjectMapper de Spring, que sabe deserializar el Instant de ProcesarOrden. */
     @Bean
     public Jackson2JsonMessageConverter convertidor(ObjectMapper mapper) {
         return new Jackson2JsonMessageConverter(mapper);
     }
 
-    /**
-     * El configurer aplica spring.rabbitmq.listener.simple.* de application.yml
-     * (prefetch, concurrencia, reintentos); después se fija el convertidor JSON.
-     */
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             SimpleRabbitListenerContainerFactoryConfigurer configurer, ConnectionFactory connectionFactory,

@@ -9,10 +9,7 @@ import org.springframework.boot.autoconfigure.amqp.RabbitTemplateConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Lado productor de RabbitMQ. Solo declara el exchange order_tasks: las colas las declara cada
- * worker. Declarar un exchange que ya existe con los mismos parámetros es idempotente.
- */
+/** Lado productor de RabbitMQ. */
 @Configuration
 public class ConfiguracionRabbit {
 
@@ -23,13 +20,11 @@ public class ConfiguracionRabbit {
         return new FanoutExchange(EXCHANGE_TAREAS, true, false);
     }
 
-    /** Con el ObjectMapper de Spring, que sabe serializar el Instant de ProcesarOrden. */
     @Bean
     public Jackson2JsonMessageConverter convertidor(ObjectMapper mapper) {
         return new Jackson2JsonMessageConverter(mapper);
     }
 
-    /** RabbitTemplate con la configuración de application.yml y el convertidor JSON. */
     @Bean
     public RabbitTemplate rabbitTemplate(RabbitTemplateConfigurer configurer, ConnectionFactory connectionFactory,
                                          Jackson2JsonMessageConverter convertidor) {

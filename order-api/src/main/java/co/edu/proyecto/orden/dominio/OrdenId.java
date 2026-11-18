@@ -4,7 +4,7 @@ import co.edu.proyecto.orden.dominio.excepciones.DominioException;
 
 import java.util.UUID;
 
-/** Value Object: identidad de una orden. Inmutable y siempre válido. */
+/** Value Object. */
 public record OrdenId(UUID valor) {
 
     public OrdenId {

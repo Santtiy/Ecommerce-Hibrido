@@ -6,19 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 
-/**
- * Estado actual de cada orden, indexado por orderId.
- *
- * <p>Concurrencia: tres consumidores de Kafka (pago, stock, correo) escriben sobre este mismo mapa
- * a la vez desde hilos distintos. Un HashMap normal se corrompería (entradas perdidas o, durante un
- * redimensionado, estructura interna inconsistente). Además, leer-modificar-escribir en dos pasos
- * perdería actualizaciones: dos hilos leerían el mismo estado y el segundo pisaría al primero.
- * {@link ConcurrentHashMap#compute} hace esa lectura-modificación-escritura de forma ATÓMICA por clave.
- *
- * <p>Idempotencia: cada resultado FIJA un campo a un valor, no lo incrementa. Recibir dos veces el
- * mismo resultado deja el estado igual, lo que protege frente a mensajes duplicados (Kafka y
- * RabbitMQ garantizan entrega "al menos una vez", y los reintentos pueden repetir un resultado).
- */
+/** Estado actual de cada orden, indexado por orderId. */
 @Component
 public class RepositorioEstados {
 
@@ -40,7 +28,6 @@ public class RepositorioEstados {
         return estados.get(orderId);
     }
 
-    /** Copia de todos los estados, para enviar la foto completa a un navegador recién conectado. */
     public Map<String, EstadoDashboard> todos() {
         return Map.copyOf(estados);
     }

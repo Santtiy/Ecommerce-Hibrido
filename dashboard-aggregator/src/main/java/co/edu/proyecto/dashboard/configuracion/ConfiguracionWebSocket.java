@@ -19,8 +19,6 @@ public class ConfiguracionWebSocket implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        // Dashboard de solo lectura en entorno local: se acepta cualquier origen
-        // (localhost, 127.0.0.1 o la IP de la máquina). Restringirlo en producción.
         registry.addHandler(manejador, "/ws/ordenes").setAllowedOrigins("*");
     }
 }

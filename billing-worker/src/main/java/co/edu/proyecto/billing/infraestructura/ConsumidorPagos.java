@@ -41,7 +41,6 @@ public class ConsumidorPagos {
                 comando.orderId(), resultado.status(), ms, Thread.currentThread().getName());
     }
 
-    /** Pausa de 200 a 500 ms para que la concurrencia entre hilos e instancias se vea en los logs. */
     private void simularTrabajo() {
         try {
             Thread.sleep(ThreadLocalRandom.current().nextLong(200, 501));
@@ -51,11 +50,6 @@ public class ConsumidorPagos {
         }
     }
 
-    /**
-     * Espera la confirmación de Kafka antes de terminar: si falla, la excepción hace que RabbitMQ
-     * reintente el mensaje (3 intentos) y, agotados, lo envíe a failed_tasks. Así el mensaje solo
-     * se confirma (ack) cuando el resultado quedó publicado. La clave es el orderId.
-     */
     private void publicar(ResultadoTarea resultado) {
         try {
             kafkaTemplate.send(ConfiguracionKafka.TOPIC, resultado.orderId(), resultado).get(10, TimeUnit.SECONDS);

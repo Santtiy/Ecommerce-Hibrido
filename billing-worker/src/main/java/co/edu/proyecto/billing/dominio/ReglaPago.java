@@ -6,7 +6,7 @@ import co.edu.proyecto.common.contratos.ResultadoTarea;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** RN-11: un pago por encima de 1.000.000 se rechaza. Clase pura, sin Spring. */
+/** RN-11. */
 public class ReglaPago {
 
     public static final BigDecimal LIMITE = new BigDecimal("1000000");

@@ -1,8 +1,5 @@
 package co.edu.proyecto.orden.aplicacion;
 
-// Pruebas de ORQUESTACIÓN: las cuatro dependencias son dobles (@Mock + @InjectMocks) para
-// aislar a OrdenService y verificar con verify() a quién llama, cuántas veces y en qué casos.
-
 import co.edu.proyecto.common.contratos.OrdenCreada;
 import co.edu.proyecto.orden.aplicacion.dto.CrearOrdenRequest;
 import co.edu.proyecto.orden.aplicacion.dto.ItemRequest;
@@ -56,7 +53,6 @@ class OrdenServiceTest {
                 new ItemRequest("SKU-2", "Mouse", 1, new BigDecimal("15000"))));
     }
 
-    /** Los mocks devuelven null por defecto: se hace que las estrategias dejen pasar el valor. */
     private void estrategiasNeutras() {
         when(descuento.aplicar(any())).thenAnswer(inv -> inv.getArgument(0));
         when(impuesto.aplicar(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -64,15 +60,12 @@ class OrdenServiceTest {
 
     @Test
     void ordenServiceGuardaLaOrdenEnElRepositorioYPublicaElEvento() {
-        // Arrange
         estrategiasNeutras();
         when(repositorio.guardar(any(Orden.class))).thenAnswer(inv -> inv.getArgument(0));
         ArgumentCaptor<OrdenCreada> eventoCaptor = ArgumentCaptor.forClass(OrdenCreada.class);
 
-        // Act
         Orden orden = servicio.registrar(solicitudValida());
 
-        // Assert
         verify(repositorio).guardar(orden);
         verify(publicador).publicar(eventoCaptor.capture());
         OrdenCreada evento = eventoCaptor.getValue();
@@ -82,30 +75,24 @@ class OrdenServiceTest {
 
     @Test
     void ordenServiceNoPublicaNingunEventoSiElRepositorioLanzaUnaExcepcion() {
-        // Arrange
         estrategiasNeutras();
         RuntimeException falloBd = new RuntimeException("Base de datos no disponible");
         doThrow(falloBd).when(repositorio).guardar(any());
 
-        // Act
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> servicio.registrar(solicitudValida()));
 
-        // Assert
         assertSame(falloBd, error);
         verifyNoInteractions(publicador);
     }
 
     @Test
     void ordenServiceDelegaElCalculoEnLasEstrategiasExactamenteUnaVez() {
-        // Arrange
         estrategiasNeutras();
         when(repositorio.guardar(any(Orden.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         servicio.registrar(solicitudValida());
 
-        // Assert
         verify(descuento, times(1)).aplicar(Dinero.de("75000", "COP"));
         verify(impuesto, times(1)).aplicar(any(Dinero.class));
     }
